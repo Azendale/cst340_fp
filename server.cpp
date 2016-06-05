@@ -1,13 +1,18 @@
 #include <iostream>
 #include <vector>
-#include <ctype.h>
-#include <stdlib.h>
 #include <string>
+
+extern "C"
+{
+	#include <ctype.h>
+	#include <unistd.h>
+	#include <stdlib.h>
+}
 
 std::string getPortString(int argc, char ** argv)
 {
 	int arg;
-	std::string portString;
+	char * portString = NULL;
 	while (-1 != (arg = getopt(argc, argv, "p:")))
 	{
 		if ('p' == arg)
@@ -17,10 +22,10 @@ std::string getPortString(int argc, char ** argv)
 	}
 	if (NULL == portString)
 	{
-		cerr << "No port number or service name set. Please specify it"
-		" with -p <port_number>.\n");
+		std::cerr << "No port number or service name set. Please specify it with -p <port_number>.\n";
+		return std::string("");
 	}
-	return portString;
+	return std::string(portString);
 }
 
 int main(int argc, char ** argv)
