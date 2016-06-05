@@ -15,9 +15,17 @@ extern "C"
 	#include <sys/socket.h>
 	// For memset
 	#include <string.h>
+	#include <signal.h>
 }
 
-static int maxFd = 0;
+#include "FdMapEntry.h"
+
+// For the FD map, says where to look at state associated with FD
+#define FD_LOC_ACCEPT_VAR 1
+#define FD_LOC_LOBBY_LIST 2
+#define FD_LOC_GAME_LIST 3
+
+static std::vector<FdMapEntry> FdLocations;
 
 std::string getPortString(int argc, char ** argv)
 {
@@ -38,7 +46,16 @@ std::string getPortString(int argc, char ** argv)
 	return std::string(portString);
 }
 
-int SetUpListing(std::string portString)
+void fdAddSet(fd_set& set, int newFd, int & maxFd)
+{
+	if (newFd > maxFd)
+	{
+		maxFd = newFd;
+	}
+	FD_SET(newFd, &set);
+}
+
+int SetUpListing(std::string portString, int & maxFd, fd_set & readList, int & sockfd)
 {
 	// Gives getaddrinfo hints about the critera for the addresses it returns
 	struct addrinfo hints;
@@ -113,20 +130,28 @@ int SetUpListing(std::string portString)
 		std::cerr << "Call to listen failed.\n";
 		return 32;
 	}
+	
+	// Been modifying reference to the accept var through sockfd reference all along
+	
+	// Add to FD map
+	FdLocations.push_back(FdMapEntry(sockfd, FD_LOC_ACCEPT_VAR, 0));
+	
+	fdAddSet(readList, sockfd, maxFd);
+	
+	return 0;
 }
 
-void fdAddSet(fd_set& set, int newFd()
+void sigint(int signal)
 {
-	if (newFd > maxFd)
-	{
-		maxFd = newFd;
-	}
-	FD_SET(newFd, &set);
+	// Close open FDs
 }
 
 int main(int argc, char ** argv)
 {
+	int maxFd = 1;
+	int sockfd = -1;
 	std::string port = getPortString(argc, argv);
+	
 	if (port == "")
 	{
 		return 1;
@@ -136,7 +161,7 @@ int main(int argc, char ** argv)
 	
 	// Install the signal handler for SIGINT.
 	struct sigaction s;
-	s.sa_handler = sigterm;
+	s.sa_handler = sigint;
 	sigemptyset(&s.sa_mask);
 	s.sa_flags = 0;
 	sigaction(SIGINT, &s, NULL);
@@ -153,12 +178,52 @@ int main(int argc, char ** argv)
 	fd_set writeSet;
 	FD_ZERO(&writeSet);
 	
+	if (SetUpListing(port, maxFd, readSet, sockfd))
+	{
+		return -1;
+	}
 	
-	
-	
-	while (pselect(1, &readSet, &writeSet, NULL, NULL, &oldset) >= 0) {
+	while (pselect(1, &readSet, &writeSet, NULL, NULL, &oldset) >= 0)
+	{
 		// Do some processing. Note that the process will not be
 		// interrupted while inside this loop.
+		for (auto it = FdLocations.begin(); it != FdLocations.end(); ++it)
+		{
+			int thisFD = it->GetFD();
+			int collection = it->GetCollection();
+			if (FD_ISSET(thisFD, &readSet))
+			{
+				// Fd ready for read
+				if (FD_LOC_ACCEPT_VAR == collection)
+				{
+					
+				}
+				else if (FD_LOC_LOBBY_LIST == collection)
+				{
+					
+				}
+				else if (FD_LOC_GAME_LIST == collection)
+				{
+					
+				}
+			}
+			if (FD_ISSET(thisFD, &writeSet))
+			{
+				// Fd ready for write
+				if (FD_LOC_ACCEPT_VAR == collection)
+				{
+					
+				}
+				else if (FD_LOC_LOBBY_LIST == collection)
+				{
+					
+				}
+				else if (FD_LOC_GAME_LIST == collection)
+				{
+					
+				}
+			}
+		}
 		sleep(5);
 	}
 }
