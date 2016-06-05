@@ -24,6 +24,7 @@ extern "C"
 #define FD_LOC_ACCEPT_VAR 1
 #define FD_LOC_LOBBY_LIST 2
 #define FD_LOC_GAME_LIST 3
+#define FD_LOC_ANON_List 4
 
 static std::vector<FdMapEntry> FdLocations;
 
@@ -146,6 +147,30 @@ void sigint(int signal)
 	// Close open FDs
 }
 
+int acceptConnection(int sockfd, fd_set & readSet, std::vecter<int> & anonFds)
+{
+	int acceptfd = -1;
+	if (-1 == (acceptfd = accept(sockfd, NULL, NULL)))
+	{
+		perror("Trouble accept()ing a connection");
+		close(sockfd);
+		// Things the man page says we should check for and try again after
+		if (!(EAGAIN == errno || ENETDOWN == errno || EPROTO == errno || \
+			ENOPROTOOPT == errno || EHOSTDOWN == errno || ENONET == errno \
+			|| EHOSTUNREACH == errno || EOPNOTSUPP == errno || ENETUNREACH))
+		{
+			// Something the man page didn't list went wrong, let's give up
+			serverShutdown = true;
+		}
+	}
+	else
+	{
+		FdLocations.push_back(FdMapEntry(acceptfd, FD_LOC_ANON_LIST));
+		FdAnons.push_back(acceptFd);
+	}
+}
+
+
 int main(int argc, char ** argv)
 {
 	int maxFd = 1;
@@ -190,7 +215,8 @@ int main(int argc, char ** argv)
 		for (auto it = FdLocations.begin(); it != FdLocations.end(); ++it)
 		{
 			int thisFD = it->GetFD();
-			int collection = it->GetCollection();
+			short collection = it->GetCollection();
+			int index = it->GetIndex();
 			if (FD_ISSET(thisFD, &readSet))
 			{
 				// Fd ready for read
@@ -206,6 +232,7 @@ int main(int argc, char ** argv)
 				{
 					
 				}
+				FD_CLR(thisFD, &readSet);
 			}
 			if (FD_ISSET(thisFD, &writeSet))
 			{
@@ -222,8 +249,8 @@ int main(int argc, char ** argv)
 				{
 					
 				}
+				FD_CLR(thisFD, &writeSet);
 			}
 		}
-		sleep(5);
 	}
 }
