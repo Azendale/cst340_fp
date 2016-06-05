@@ -31,5 +31,10 @@ std::string getPortString(int argc, char ** argv)
 int main(int argc, char ** argv)
 {
 	std::string port = getPortString(argc, argv);
+	if (port == "")
+	{
+		return 1;
+	}
+	
 	
 }
