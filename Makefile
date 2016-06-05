@@ -8,7 +8,7 @@ CXXFLAGS=-Wall -Wshadow -Wunreachable-code -Wredundant-decls -DGIT_VERSION=\"$(G
 CXX=g++
 CC=gcc
 
-OBJS = list.o \
+OBJS = FdMapEntry.o \
 
 all: client server
 

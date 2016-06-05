@@ -1,38 +1,38 @@
 #include "FdMapEntry.h"
 
-FdMapEntry(int fd, short fdCollection, int fdIndex)
+FdMapEntry::FdMapEntry(int fd, short fdCollection, int fdIndex)
 {
 	this->fd = fd;
 	this->fdCollection = fdCollection;
 	this->fdIndex = fdIndex;
 }
 
-~FdMapEntry()
+FdMapEntry::~FdMapEntry()
 {
 	
 }
 
-int GetFD() const
+int FdMapEntry::GetFD() const
 {
 	return fd;
 }
 
-short GetCollection() const
+short FdMapEntry::GetCollection() const
 {
 	return fdCollection;
 }
 
-int GetIndex() const
+int FdMapEntry::GetIndex() const
 {
 	return fdIndex;
 }
 
-void SetIndex(int Index)
+void FdMapEntry::SetIndex(int Index)
 {
 	this->fdIndex = Index;
 }
 
-void SetCollection(short Collection)
+void FdMapEntry::SetCollection(short Collection)
 {
 	this->fdCollection = Collection;
 }
