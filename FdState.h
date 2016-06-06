@@ -2,15 +2,19 @@
 #include <string>
 
 #define FD_STATE_ACCEPT_SOCK 0
+// Reads coming out of FD_STATE_ANON will be 32 bits
 #define FD_STATE_ANON 1
-#define FD_STATE_NAME_REQUESTED 2
-#define FD_STATE_LOBBY 3
-#define FD_STATE_REQ_GAME 4
-#define FD_STATE_GAME_WAIT_THISFD_MOVE 5
-#define FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS 6
-#define FD_STATE_GAME_WAIT_OFD_MOVE 7
-#define FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS 8
-#define FD_STATE_WAIT_QUIT_ACK 9
+// Reads coming out of FD_STATE_ANON_NAME_SIZE will be governed by the size sent earlier in the transition from FD_STATE_ANON to FD_STATE_ANON_NAME_SIZE
+#define FD_STATE_ANON_NAME_SIZE 2
+// Writes to FD_STATE_NAME_REQUESTED will be 32 bits
+#define FD_STATE_NAME_REQUESTED 3
+#define FD_STATE_LOBBY 4
+#define FD_STATE_REQ_GAME 5
+#define FD_STATE_GAME_WAIT_THISFD_MOVE 6
+#define FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS 7
+#define FD_STATE_GAME_WAIT_OFD_MOVE 8
+#define FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS 9
+#define FD_STATE_WAIT_QUIT_ACK 10
 
 class FdState
 {

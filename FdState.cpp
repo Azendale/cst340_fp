@@ -75,12 +75,12 @@ int FdState::Read()
 	else if (readCount == 0)
 	{
 		// End of file
-		return 2;
+		return -2;
 	}
 	else
 	{
 		// Error
-		return 3;
+		return -3;
 	}
 }
 
@@ -101,12 +101,12 @@ int FdState::Write()
 	else if (writeCount == 0)
 	{
 		// End of file
-		return 2;
+		return -2;
 	}
 	else
 	{
 		// Error
-		return 3;
+		return -3;
 	}
 }
 

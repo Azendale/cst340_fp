@@ -160,16 +160,33 @@ int acceptConnection(int sockfd, fd_set & readSet)
 	}
 	else
 	{
-		Fds.push_back(FdState(acceptfd, FD_STATE_ANON));
+		FdState newConnection(acceptfd, FD_STATE_ANON);
+		Fds.push_back(newConnection);
+		newConnection.SetRead(sizeof(uint32_t));
+		FD_SET(newConnection.GetFD(), &readSet);
 	}
 	return 0;
 }
 
 
-int anonRead(int fd, fd_set & readSet, fd_set & writeSet, std::vector<std::string> & usernames)
+int anonRead(FdState & state, fd_set & readSet)
 {
-	
-	return 0;
+	int readResult = state.Read();
+	if (readResult == 1)
+	{
+		// We're done, handle the result
+		uint32_t request = ntohl(*(uint32_t *)readBuf);
+	}
+	else if (readResult < 0)
+	{
+		// Need to read again, do nothing
+	}
+	else
+	{
+		// End of connection
+		// Remove from read set
+		// Remove from FD list
+	}
 }
 
 
@@ -226,6 +243,10 @@ int main(int argc, char ** argv)
 					
 				}
 				else if (FD_STATE_ANON == state)
+				{
+					
+				}
+				else if (FD_STATE_ANON_NAME_SIZE == state)
 				{
 					
 				}
