@@ -12,21 +12,17 @@ extern "C"
 	#include <netinet/in.h>
 	#include <netinet/tcp.h>
 	#include <errno.h>
+	// for perror
+	#include <stdio.h>
 	#include <sys/socket.h>
 	// For memset
 	#include <string.h>
 	#include <signal.h>
 }
 
-#include "FdMapEntry.h"
+#include "FdState.h"
 
-// For the FD map, says where to look at state associated with FD
-#define FD_LOC_ACCEPT_VAR 1
-#define FD_LOC_LOBBY_LIST 2
-#define FD_LOC_GAME_LIST 3
-#define FD_LOC_ANON_List 4
-
-static std::vector<FdMapEntry> FdLocations;
+static std::vector<FdState> Fds;
 
 std::string getPortString(int argc, char ** argv)
 {
@@ -134,9 +130,8 @@ int SetUpListing(std::string portString, int & maxFd, fd_set & readList, int & s
 	
 	// Been modifying reference to the accept var through sockfd reference all along
 	
-	// Add to FD map
-	FdLocations.push_back(FdMapEntry(sockfd, FD_LOC_ACCEPT_VAR, 0));
-	
+	// Add new FD to list with correct state
+	Fds.push_back(FdState(sockfd, FD_STATE_ACCEPT_SOCK));
 	fdAddSet(readList, sockfd, maxFd);
 	
 	return 0;
@@ -147,27 +142,27 @@ void sigint(int signal)
 	// Close open FDs
 }
 
-int acceptConnection(int sockfd, fd_set & readSet, std::vecter<int> & anonFds)
+int acceptConnection(int sockfd, fd_set & readSet)
 {
 	int acceptfd = -1;
 	if (-1 == (acceptfd = accept(sockfd, NULL, NULL)))
 	{
 		perror("Trouble accept()ing a connection");
-		close(sockfd);
 		// Things the man page says we should check for and try again after
 		if (!(EAGAIN == errno || ENETDOWN == errno || EPROTO == errno || \
 			ENOPROTOOPT == errno || EHOSTDOWN == errno || ENONET == errno \
 			|| EHOSTUNREACH == errno || EOPNOTSUPP == errno || ENETUNREACH))
 		{
 			// Something the man page didn't list went wrong, let's give up
-			serverShutdown = true;
+			close(sockfd);
 		}
 	}
 	else
 	{
-		FdLocations.push_back(FdMapEntry(acceptfd, FD_LOC_ANON_LIST));
-		FdAnons.push_back(acceptFd);
+		Fds.push_back(FdState(acceptfd, FD_STATE_ANON));
+		
 	}
+	return 0;
 }
 
 
@@ -212,23 +207,50 @@ int main(int argc, char ** argv)
 	{
 		// Do some processing. Note that the process will not be
 		// interrupted while inside this loop.
-		for (auto it = FdLocations.begin(); it != FdLocations.end(); ++it)
+		for (const auto& it: Fds)
 		{
-			int thisFD = it->GetFD();
-			short collection = it->GetCollection();
-			int index = it->GetIndex();
+			int thisFD = it.GetFD();
+			short state = it.GetState();
 			if (FD_ISSET(thisFD, &readSet))
 			{
 				// Fd ready for read
-				if (FD_LOC_ACCEPT_VAR == collection)
+				if (FD_STATE_ACCEPT_SOCK == state)
 				{
 					
 				}
-				else if (FD_LOC_LOBBY_LIST == collection)
+				else if (FD_STATE_ANON == state)
 				{
 					
 				}
-				else if (FD_LOC_GAME_LIST == collection)
+				else if (FD_STATE_NAME_REQUESTED == state)
+				{
+					
+				}
+				else if (FD_STATE_LOBBY == state)
+				{
+					
+				}
+				else if (FD_STATE_REQ_GAME == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS == state)
+				{
+					
+				}
+				else if (FD_STATE_WAIT_QUIT_ACK == state)
 				{
 					
 				}
@@ -237,18 +259,6 @@ int main(int argc, char ** argv)
 			if (FD_ISSET(thisFD, &writeSet))
 			{
 				// Fd ready for write
-				if (FD_LOC_ACCEPT_VAR == collection)
-				{
-					
-				}
-				else if (FD_LOC_LOBBY_LIST == collection)
-				{
-					
-				}
-				else if (FD_LOC_GAME_LIST == collection)
-				{
-					
-				}
 				FD_CLR(thisFD, &writeSet);
 			}
 		}

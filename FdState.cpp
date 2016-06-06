@@ -1,9 +1,10 @@
-#include "FdMapEntry.h"
+#include "FdState.h"
 
 FdState::FdState(int Fd, short State)
 {
 	this->fd = Fd;
 	this->state = State;
+	this->otherPlayer = -1;
 }
 
 FdState::~FdState()
@@ -34,4 +35,14 @@ void FdState::SetName(const std::string & newName)
 std::string FdState::GetName() const
 {
 	return this->name;
+}
+
+int FdState::GetOtherPlayer() const
+{
+	return otherPlayer;
+}
+
+void FdState::SetOtherPlayer(int newOtherPlayer)
+{
+	this->otherPlayer = newOtherPlayer;
 }

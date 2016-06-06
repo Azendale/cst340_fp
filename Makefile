@@ -4,11 +4,11 @@
 #
 GIT_VERSION := $(shell git describe --abbrev=7 --dirty="-uncommitted" --always --tags)
 CFLAGS=-Wall -Wshadow -Wunreachable-code -Wredundant-decls -DGIT_VERSION=\"$(GIT_VERSION)\" -g -O0 -std=gnu99
-CXXFLAGS=-Wall -Wshadow -Wunreachable-code -Wredundant-decls -DGIT_VERSION=\"$(GIT_VERSION)\" -g -O0
+CXXFLAGS=-Wall -Wshadow -Wunreachable-code -Wredundant-decls -DGIT_VERSION=\"$(GIT_VERSION)\" -g -O0 -std=c++11
 CXX=g++
 CC=gcc
 
-OBJS = FdMapEntry.o \
+OBJS = FdState.o \
 
 all: client server
 
