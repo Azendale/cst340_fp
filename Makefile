@@ -24,8 +24,8 @@ clean:
 	$(CXX) $(CXXFLAGS) -c $? -o $@
 	
 server: $(OBJS) server.cpp
-	$(CXX) $(CXXFLAGS) $(OBJS) server.cpp -lpthread -o server
+	$(CXX) $(CXXFLAGS) $(OBJS) server.cpp -o server
 
 client: $(OBJS) client.c
-	$(CC) $(CFLAGS) $(OBJS) client.c -lpthread -o client
+	$(CC) $(CFLAGS) $(OBJS) client.c -o client
 
