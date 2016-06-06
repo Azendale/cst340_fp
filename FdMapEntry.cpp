@@ -1,27 +1,37 @@
 #include "FdMapEntry.h"
 
-FdMapEntry::FdMapEntry(int fd, short fdCollection)
+FdState::FdState(int Fd, short State)
 {
-	this->fd = fd;
-	this->fdCollection = fdCollection;
+	this->fd = Fd;
+	this->state = State;
 }
 
-FdMapEntry::~FdMapEntry()
+FdState::~FdState()
 {
 	
 }
 
-int FdMapEntry::GetFD() const
+int FdState::GetFD() const
 {
 	return fd;
 }
 
-short FdMapEntry::GetCollection() const
+short FdState::GetState() const
 {
-	return fdCollection;
+	return state;
 }
 
-void FdMapEntry::SetCollection(short Collection)
+void FdState::SetState(short State)
 {
-	this->fdCollection = Collection;
+	this->state = State;
+}
+
+void FdState::SetName(const std::string & newName)
+{
+	this->name = newName;
+}
+
+std::string FdState::GetName() const
+{
+	return this->name;
 }

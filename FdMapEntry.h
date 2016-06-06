@@ -1,14 +1,18 @@
 #pragma once
+#include <string>
 
-class FdMapEntry
+class FdState
 {
 public:
-	FdMapEntry(int fd, short fdCollection);
-	~FdMapEntry();
+	FdState(int fd, short state);
+	~FdState();
 	int GetFD() const;
-	short GetCollection() const;
-	void SetCollection(short Collection);
+	short GetState() const;
+	void SetName();
+	std::string GetName() const;
 private:
 	int fd;
-	short fdCollection;
+	short state;
+	std::string name;
+	
 };
