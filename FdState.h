@@ -24,9 +24,27 @@ public:
 	std::string GetName() const;
 	int GetOtherPlayer() const;
 	void SetOtherPlayer(int newOtherPlayer);
+	// Reads once and returns true if that's all we were trying to get
+	int Read();
+	// Writes once and returns true if that's all we were trying to write
+	int Write();
+	// Set up what we want to write
+	void SetWrite(char * buff, short size);
+	// Set how much we want to read
+	void SetRead(short size);
+	// Get what was read and how long it is
+	void GetRead(char * & buff, short & size);
 private:
 	int fd;
 	short state;
 	std::string name;
 	int otherPlayer;
+	short readPtr;
+	short writePtr;
+	short readSize;
+	short writeSize;
+	char * readBuf;
+	char * writeBuf;
+	bool readInProgress;
+	bool writeInProgress;
 };

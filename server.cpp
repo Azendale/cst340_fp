@@ -155,13 +155,20 @@ int acceptConnection(int sockfd, fd_set & readSet)
 		{
 			// Something the man page didn't list went wrong, let's give up
 			close(sockfd);
+			FD_CLR(sockfd, &readSet);
 		}
 	}
 	else
 	{
 		Fds.push_back(FdState(acceptfd, FD_STATE_ANON));
-		
 	}
+	return 0;
+}
+
+
+int anonRead(int fd, fd_set & readSet, fd_set & writeSet, std::vector<std::string> & usernames)
+{
+	
 	return 0;
 }
 
