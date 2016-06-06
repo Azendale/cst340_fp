@@ -259,6 +259,42 @@ int main(int argc, char ** argv)
 			if (FD_ISSET(thisFD, &writeSet))
 			{
 				// Fd ready for write
+				if (FD_STATE_ANON == state)
+				{
+					
+				}
+				else if (FD_STATE_NAME_REQUESTED == state)
+				{
+					
+				}
+				else if (FD_STATE_LOBBY == state)
+				{
+					
+				}
+				else if (FD_STATE_REQ_GAME == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
+				{
+					
+				}
+				else if (FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS == state)
+				{
+					
+				}
+				else if (FD_STATE_WAIT_QUIT_ACK == state)
+				{
+					
+				}
 				FD_CLR(thisFD, &writeSet);
 			}
 		}
