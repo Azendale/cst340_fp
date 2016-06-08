@@ -186,16 +186,24 @@ int removeFd(std::vector<FdState> container, int fd)
 
 int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
+	int returnVal = 0;
 	// Remove from read set
 	FD_CLR(state.GetFD(), &readSet);
 	// Remove it from the write set
 	FD_CLR(state.GetFD(), &writeSet);
 	// Remove from FD list
-	close(state.GetFD());
-	removeFd(Fds, state.GetFD());
+	if (close(state.GetFD()))
+	{
+		returnVal = 1;
+	}
+	if (removeFd(Fds, state.GetFD()))
+	{
+		returnVal = 2;
+	}
+	return returnVal;
 }
 
-int anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
+void anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	int readResult = state.Read();
 	if (readResult == 1)
