@@ -241,6 +241,71 @@ void anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
+FdState * findByName(const & std::string name)
+{
+	for (auto& state: Fds)
+	{
+		if (state.GetName() == name)
+		{
+			return &state;
+		}
+	}
+	return nullptr;
+}
+
+std::string getNameList()
+{
+	std::string returnVal("Available players:\n");
+	for (auto& state: Fds)
+	{
+		if (state.GetState() == FD_STATE_LOBBY)
+		{
+			returnVal += state.GetName();
+			returnVal += "\n";
+		}
+	}
+	return returnVal;
+}
+
+void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	short readLen;
+	char * nameResult = state.GetRead(readLen);
+	if (readLen > 0 && readLen < MAX_NAME_LEN)
+	{
+		std::string reqName = std::string(nameResult);
+		uint32_t response = 0;
+		if (findByName(reqName))
+		{
+			// Send error that the name is already taken
+			response = ACTION_NAME_TAKEN;
+			state.SetWrite(&response, sizeof(response));
+			state.SetState(FD_STATE_NAME_REJECT);
+		}
+		else
+		{
+			// Give them the name
+			state.SetName(reqName());
+			// Tell them they are in the lobby
+			response = ACTION_NAME_IS_YOURS;
+			state.SetWrite(&response, sizeof(response));
+			state.SetState(FD_STATE_NAME_ACCEPT);
+		}
+		// Not reading again until the write finishes
+		FD_CLR(state.GetFD(), readSet);
+		FD_SET(state.GetFD(), writeSet);
+	}
+	else
+	{
+		// Name that was read was too big
+		abortConnection(state.GetFD(), readSet, writeSet);
+	}
+}
+
+void nameResponseFinish(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	
+}
 
 int main(int argc, char ** argv)
 {
@@ -312,7 +377,7 @@ int main(int argc, char ** argv)
 					}
 					else if (FD_STATE_ANON_NAME_SIZE == state)
 					{
-						
+						nameRead(it, readSet, writeSet);
 					}
 					else if (FD_STATE_NAME_REQUESTED == state)
 					{
