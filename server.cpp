@@ -21,6 +21,7 @@ extern "C"
 }
 
 #include "FdState.h"
+#include "netDefines.h"
 
 static std::vector<FdState> Fds;
 
@@ -168,6 +169,17 @@ int acceptConnection(int sockfd, fd_set & readSet)
 	return 0;
 }
 
+int removeFd(std::vector<FdState> container, int fd)
+{
+	int returnVal = 1;
+	for (std::vector<FdState>::iterator it = container.begin(); it!=container.end(); ++it)
+	{
+		container.erase(it);
+		returnVal = 0;
+		break;
+	}
+	return returnVal;
+}
 
 int anonRead(FdState & state, fd_set & readSet)
 {
@@ -176,6 +188,7 @@ int anonRead(FdState & state, fd_set & readSet)
 	{
 		// We're done, handle the result
 		uint32_t request = ntohl(*(uint32_t *)readBuf);
+		// Stop waiting for a read, or change what we are waiting for
 	}
 	else if (readResult < 0)
 	{
@@ -185,7 +198,10 @@ int anonRead(FdState & state, fd_set & readSet)
 	{
 		// End of connection
 		// Remove from read set
+		FD_CLR(FdState.GetFD(), &readSet);
 		// Remove from FD list
+		close(FdState.GetFD());
+		removeFd(Fds, FdState.GetFD());
 	}
 }
 

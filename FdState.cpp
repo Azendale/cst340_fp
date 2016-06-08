@@ -116,6 +116,10 @@ void FdState::SetWrite(char * buff, short size)
 	if (size > 0)
 	{
 		writeSize = size;
+		if (writeBuf != nullptr)
+		{
+			delete [] writeBuf;
+		}
 		writeBuf = new char[size];
 		writePtr = 0;
 		for (int i=0; i < size; ++i)
@@ -131,6 +135,10 @@ void FdState::SetRead(short size)
 	if (size > 0)
 	{
 		readSize = size;
+		if (readBuf != nullptr)
+		{
+			delete [] readBuf;
+		}
 		readBuf = new char[size];
 		readPtr = 0;
 	}
