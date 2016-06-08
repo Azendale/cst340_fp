@@ -184,16 +184,18 @@ int removeFd(std::vector<FdState> container, int fd)
 	return returnVal;
 }
 
-int abortConnection(FdState & state)
+int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Remove from read set
-	FD_CLR(FdState.GetFD(), &readSet);
+	FD_CLR(state.GetFD(), &readSet);
+	// Remove it from the write set
+	FD_CLR(state.GetFD(), &writeSet);
 	// Remove from FD list
-	close(FdState.GetFD());
-	removeFd(Fds, FdState.GetFD());
+	close(state.GetFD());
+	removeFd(Fds, state.GetFD());
 }
 
-int anonRead(FdState & state, fd_set & readSet)
+int anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	int readResult = state.Read();
 	if (readResult == 1)
@@ -201,14 +203,14 @@ int anonRead(FdState & state, fd_set & readSet)
 		// We're done, handle the result
 		uint32_t request;
 		short readSize = sizeof(short);
-		request = *(uint32_t *))FdState.GetRead(readSize);
+		request = *((uint32_t *)state.GetRead(readSize));
 		request= ntohl(request);
-		if (request & ACION_MASK == ACTION_NAME_REQUEST)
+		if ((request & ACTION_MASK) == ACTION_NAME_REQUEST)
 		{
 			// Stop waiting for a read, or change what we are waiting for
 			// Get size of name and check it for validness
 			uint32_t nameSize = request & TRANSFER_SIZE_MASK;
-			if (namesize > 0 && nameSize < MAX_NAME_LEN)
+			if (nameSize > 0 && nameSize < MAX_NAME_LEN)
 			{
 				// Set up for a transfer of nameSize
 				state.SetState(FD_STATE_ANON_NAME_SIZE);
@@ -217,13 +219,13 @@ int anonRead(FdState & state, fd_set & readSet)
 			else
 			{
 				// Invalid name size, abort connection.
-				abortConnection(state);
+				abortConnection(state, readSet, writeSet);
 			}
 		}
 		else
 		{
 			// All other requests are invalid state transitions
-			abortConnection(state);
+			abortConnection(state, readSet, writeSet);
 		}
 	}
 	else if (readResult == 0)
@@ -233,7 +235,7 @@ int anonRead(FdState & state, fd_set & readSet)
 	else if (readResult < 0)
 	{
 		// End of connection
-		abortConnection(state);
+		abortConnection(state, readSet, writeSet);
 	}
 }
 
@@ -279,7 +281,7 @@ int main(int argc, char ** argv)
 	{
 		// Do some processing. Note that the process will not be
 		// interrupted while inside this loop.
-		for (const auto& it: Fds)
+		for (auto& it: Fds)
 		{
 			int thisFD = it.GetFD();
 			short state = it.GetState();
@@ -292,7 +294,7 @@ int main(int argc, char ** argv)
 				}
 				else if (FD_STATE_ANON == state)
 				{
-					
+					anonRead(it, readSet, writeSet);
 				}
 				else if (FD_STATE_ANON_NAME_SIZE == state)
 				{

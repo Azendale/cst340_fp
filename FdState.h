@@ -37,7 +37,7 @@ public:
 	// Set how much we want to read
 	void SetRead(short size);
 	// Get what was read and how long it is
-	void GetRead(char * & buff, short & size);
+	char * GetRead(short & size);
 private:
 	int fd;
 	short state;
