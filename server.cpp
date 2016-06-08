@@ -174,11 +174,23 @@ int removeFd(std::vector<FdState> container, int fd)
 	int returnVal = 1;
 	for (std::vector<FdState>::iterator it = container.begin(); it!=container.end(); ++it)
 	{
-		container.erase(it);
-		returnVal = 0;
-		break;
+		if (fd == it->GetFD())
+		{
+			container.erase(it);
+			returnVal = 0;
+			break;
+		}
 	}
 	return returnVal;
+}
+
+int abortConnection(FdState & state)
+{
+	// Remove from read set
+	FD_CLR(FdState.GetFD(), &readSet);
+	// Remove from FD list
+	close(FdState.GetFD());
+	removeFd(Fds, FdState.GetFD());
 }
 
 int anonRead(FdState & state, fd_set & readSet)
@@ -187,21 +199,41 @@ int anonRead(FdState & state, fd_set & readSet)
 	if (readResult == 1)
 	{
 		// We're done, handle the result
-		uint32_t request = ntohl(*(uint32_t *)readBuf);
-		// Stop waiting for a read, or change what we are waiting for
+		uint32_t request;
+		short readSize = sizeof(short);
+		request = *(uint32_t *))FdState.GetRead(readSize);
+		request= ntohl(request);
+		if (request & ACION_MASK == ACTION_NAME_REQUEST)
+		{
+			// Stop waiting for a read, or change what we are waiting for
+			// Get size of name and check it for validness
+			uint32_t nameSize = request & TRANSFER_SIZE_MASK;
+			if (namesize > 0 && nameSize < MAX_NAME_LEN)
+			{
+				// Set up for a transfer of nameSize
+				state.SetState(FD_STATE_ANON_NAME_SIZE);
+				state.SetRead(nameSize);
+			}
+			else
+			{
+				// Invalid name size, abort connection.
+				abortConnection(state);
+			}
+		}
+		else
+		{
+			// All other requests are invalid state transitions
+			abortConnection(state);
+		}
 	}
-	else if (readResult < 0)
+	else if (readResult == 0)
 	{
 		// Need to read again, do nothing
 	}
-	else
+	else if (readResult < 0)
 	{
 		// End of connection
-		// Remove from read set
-		FD_CLR(FdState.GetFD(), &readSet);
-		// Remove from FD list
-		close(FdState.GetFD());
-		removeFd(Fds, FdState.GetFD());
+		abortConnection(state);
 	}
 }
 

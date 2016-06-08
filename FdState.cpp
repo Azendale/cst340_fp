@@ -145,7 +145,8 @@ void FdState::SetRead(short size)
 }
 
 // Get what was read and how long it is
-void FdState::GetRead(char * & buff, short & size)
+char * FdState::GetRead(short & size)
 {
-	
+	size = readSize;
+	return readBuf;
 }
