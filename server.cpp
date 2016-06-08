@@ -241,7 +241,7 @@ void anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-FdState * findByName(const & std::string name)
+FdState * findByName(const std::string & name)
 {
 	for (auto& state: Fds)
 	{
@@ -280,26 +280,25 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		{
 			// Send error that the name is already taken
 			response = ACTION_NAME_TAKEN;
-			state.SetWrite(&response, sizeof(response));
 			state.SetState(FD_STATE_NAME_REJECT);
 		}
 		else
 		{
 			// Give them the name
-			state.SetName(reqName());
+			state.SetName(reqName);
 			// Tell them they are in the lobby
 			response = ACTION_NAME_IS_YOURS;
-			state.SetWrite(&response, sizeof(response));
 			state.SetState(FD_STATE_NAME_ACCEPT);
 		}
+		state.SetWrite((char *)(&response), 32/8);
 		// Not reading again until the write finishes
-		FD_CLR(state.GetFD(), readSet);
-		FD_SET(state.GetFD(), writeSet);
+		FD_CLR(state.GetFD(), &readSet);
+		FD_SET(state.GetFD(), &writeSet);
 	}
 	else
 	{
 		// Name that was read was too big
-		abortConnection(state.GetFD(), readSet, writeSet);
+		abortConnection(state, readSet, writeSet);
 	}
 }
 
@@ -319,8 +318,8 @@ void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSe
 	// Waiting for the client to send us another name or a command to list players
 	// Either way, the size to read happens to be the same
 	state.SetRead(sizeof(uint32_t));
-	FD_CLR(state.GetFD(), writeSet);
-	FD_SET(state.GetFD(), readSet);
+	FD_CLR(state.GetFD(), &writeSet);
+	FD_SET(state.GetFD(), &readSet);
 }
 
 int main(int argc, char ** argv)
