@@ -18,7 +18,9 @@
 #define FD_STATE_GAME_WAIT_OFD_MOVE 8
 #define FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS 9
 #define FD_STATE_WAIT_QUIT_ACK 10
+// Name was rejected. Has this state during the duration of writing the reject message
 #define FD_STATE_NAME_REJECT 11
+// Name was accepted. Has this state during the duration of writing the accept message
 #define FD_STATE_NAME_ACCEPT 12
 
 class FdState

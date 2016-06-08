@@ -267,6 +267,7 @@ std::string getNameList()
 	return returnVal;
 }
 
+// Called after finishing read in FD_STATE_ANON_NAME_SIZE
 void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	short readLen;
@@ -302,9 +303,24 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-void nameResponseFinish(FdState & state, fd_set & readSet, fd_set & writeSet)
+// Called after finishing write in FD_STATE_NAME_ACCEPT or FD_STATE_NAME_REJECT state
+void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	if (state.GetState() == FD_STATE_NAME_ACCEPT)
+	{
+		// In Lobby now
+		state.SetState(FD_STATE_LOBBY);
+	}
+	else if (state.GetState() == FD_STATE_NAME_REJECT)
+	{
+		// Anonymous again
+		state.SetState(FD_STATE_ANON);
+	}
+	// Waiting for the client to send us another name or a command to list players
+	// Either way, the size to read happens to be the same
+	state.SetRead(sizeof(uint32_t));
+	FD_CLR(state.GetFD(), writeSet);
+	FD_SET(state.GetFD(), readSet);
 }
 
 int main(int argc, char ** argv)
