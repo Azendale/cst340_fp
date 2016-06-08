@@ -205,44 +205,38 @@ int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 
 void anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	int readResult = state.Read();
-	if (readResult == 1)
+	uint32_t request;
+	short readSize;
+	char * result;
+	result = state.GetRead(readSize);
+	if (readSize != sizeof(uint32_t))
 	{
-		// We're done, handle the result
-		uint32_t request;
-		short readSize = sizeof(short);
-		request = *((uint32_t *)state.GetRead(readSize));
-		request= ntohl(request);
-		if ((request & ACTION_MASK) == ACTION_NAME_REQUEST)
+		// Read amount was not the expected size
+		abortConnection(state, readSet, writeSet);
+		return;
+	}
+	request = *((uint32_t *)result);
+	request= ntohl(request);
+	if ((request & ACTION_MASK) == ACTION_NAME_REQUEST)
+	{
+		// Stop waiting for a read, or change what we are waiting for
+		// Get size of name and check it for validness
+		uint32_t nameSize = request & TRANSFER_SIZE_MASK;
+		if (nameSize > 0 && nameSize < MAX_NAME_LEN)
 		{
-			// Stop waiting for a read, or change what we are waiting for
-			// Get size of name and check it for validness
-			uint32_t nameSize = request & TRANSFER_SIZE_MASK;
-			if (nameSize > 0 && nameSize < MAX_NAME_LEN)
-			{
-				// Set up for a transfer of nameSize
-				state.SetState(FD_STATE_ANON_NAME_SIZE);
-				state.SetRead(nameSize);
-			}
-			else
-			{
-				// Invalid name size, abort connection.
-				abortConnection(state, readSet, writeSet);
-			}
+			// Set up for a transfer of nameSize
+			state.SetState(FD_STATE_ANON_NAME_SIZE);
+			state.SetRead(nameSize);
 		}
 		else
 		{
-			// All other requests are invalid state transitions
+			// Invalid name size, abort connection.
 			abortConnection(state, readSet, writeSet);
 		}
 	}
-	else if (readResult == 0)
+	else
 	{
-		// Need to read again, do nothing
-	}
-	else if (readResult < 0)
-	{
-		// End of connection
+		// All other requests are invalid state transitions
 		abortConnection(state, readSet, writeSet);
 	}
 }
@@ -295,52 +289,64 @@ int main(int argc, char ** argv)
 			short state = it.GetState();
 			if (FD_ISSET(thisFD, &readSet))
 			{
-				// Fd ready for read
-				if (FD_STATE_ACCEPT_SOCK == state)
+				int readResult = it.Read();
+				if (readResult == 0)
 				{
-					
+					// Need to read again, do nothing
 				}
-				else if (FD_STATE_ANON == state)
+				else if (readResult < 0)
 				{
-					anonRead(it, readSet, writeSet);
+					// End of connection or error reading
+					abortConnection(it, readSet, writeSet);
 				}
-				else if (FD_STATE_ANON_NAME_SIZE == state)
+				else if (readResult == 1)
 				{
-					
+					// We're done reading a chunk, handle the result
+					if (FD_STATE_ACCEPT_SOCK == state)
+					{
+						
+					}
+					else if (FD_STATE_ANON == state)
+					{
+						anonRead(it, readSet, writeSet);
+					}
+					else if (FD_STATE_ANON_NAME_SIZE == state)
+					{
+						
+					}
+					else if (FD_STATE_NAME_REQUESTED == state)
+					{
+						
+					}
+					else if (FD_STATE_LOBBY == state)
+					{
+						
+					}
+					else if (FD_STATE_REQ_GAME == state)
+					{
+						
+					}
+					else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
+					{
+						
+					}
+					else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
+					{
+						
+					}
+					else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
+					{
+						
+					}
+					else if (FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS == state)
+					{
+						
+					}
+					else if (FD_STATE_WAIT_QUIT_ACK == state)
+					{
+						
+					}
 				}
-				else if (FD_STATE_NAME_REQUESTED == state)
-				{
-					
-				}
-				else if (FD_STATE_LOBBY == state)
-				{
-					
-				}
-				else if (FD_STATE_REQ_GAME == state)
-				{
-					
-				}
-				else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
-				{
-					
-				}
-				else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
-				{
-					
-				}
-				else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
-				{
-					
-				}
-				else if (FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS == state)
-				{
-					
-				}
-				else if (FD_STATE_WAIT_QUIT_ACK == state)
-				{
-					
-				}
-				FD_CLR(thisFD, &readSet);
 			}
 			if (FD_ISSET(thisFD, &writeSet))
 			{
