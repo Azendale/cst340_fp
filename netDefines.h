@@ -10,6 +10,10 @@
 // Mask for long transfer sizes: uses all extra space left after command bits for size
 #define LONG_TRANSFER_SIZE_MASK ~ACTION_MASK
 
+#define WIN_BIT_MASK 1<<20
+#define WIN_YES WIN_BIT_MASK
+#define WIN_NO ~WIN_YES
+
 // Up to 255 chars/bytes
 #define TRANSFER_SIZE_MASK 0x000000FF
 
