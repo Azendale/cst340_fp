@@ -302,6 +302,28 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
+void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	// Switch to read
+	FD_CLR(state.GetFD(), &writeSet);
+	FD_SET(state.GetFD(), &readSet);
+	// State: anon
+	state.SetState(FD_STATE_ANON);
+	// Read size:
+	state.SetRead(32/8);
+}
+
+void nameAcceptAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	// Switch to read to listen for name listing command
+	FD_CLR(state.GetFD(), &writeSet);
+	FD_SET(state.GetFD(), &readSet);
+	// State: lobby
+	state.SetState(FD_STATE_LOBBY);
+	// Read size:
+	state.SetRead(32/8);
+}
+
 // Called after finishing write in FD_STATE_NAME_ACCEPT or FD_STATE_NAME_REJECT state
 void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
