@@ -503,11 +503,11 @@ int main(int argc, char ** argv)
 					}
 					else if (FD_STATE_NAME_REJECT == state)
 					{
-						
+						nameRejectAfterWrite(it, readSet, writeSet);
 					}
 					else if (FD_STATE_NAME_ACCEPT == state)
 					{
-						
+						nameAcceptAfterWrite(it, readSet, writeSet);
 					}
 				}
 			}
