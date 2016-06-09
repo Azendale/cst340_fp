@@ -9,6 +9,7 @@
 // We know the name size, reading the name is the next transition
 #define FD_STATE_ANON_NAME_SIZE 2
 #define FD_STATE_LOBBY 4
+// Waiting for other player to respond if they want to play or not
 #define FD_STATE_REQ_GAME 5
 #define FD_STATE_GAME_WAIT_THISFD_MOVE 6
 #define FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS 7
@@ -23,6 +24,14 @@
 #define FD_STATE_REQ_NAME_LIST 13
 // Reading name of other player to play
 #define FD_STATE_OPLYR_NAME_READ 14
+// Writing reject of invite/game request
+#define FD_STATE_GAME_REQ_REJECT 15
+// Writing accept of invite/game request
+#define FD_STATE_GAME_REQ_ACCEPT 16
+// Writing game invite, with other player name length followed by string as one write
+#define FD_STATE_GAME_INVITE 17
+// Waiting/reading response to game invitation
+#define FD_STATE_GAME_INVITE_RESP_WAIT 18
 
 class FdState
 {
@@ -34,8 +43,8 @@ public:
 	void SetState(short state);
 	void SetName(const std::string& name);
 	std::string GetName() const;
-	int GetOtherPlayer() const;
-	void SetOtherPlayer(int newOtherPlayer);
+	FdState * GetOtherPlayer() const;
+	void SetOtherPlayer(FdState * other);
 	// Reads once and returns true if that's all we were trying to get
 	int Read();
 	// Writes once and returns true if that's all we were trying to write
@@ -50,7 +59,7 @@ private:
 	int fd;
 	short state;
 	std::string name;
-	int otherPlayer;
+	FdState * otherPlayer;
 	short readPtr;
 	short writePtr;
 	short readSize;

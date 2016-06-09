@@ -245,7 +245,7 @@ FdState * findByName(const std::string & name)
 {
 	for (auto& state: Fds)
 	{
-		if (state.GetName() == name)
+		if (state.GetName() == name && state.GetState() == FD_STATE_LOBBY)
 		{
 			return &state;
 		}
@@ -373,6 +373,7 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	{
 		// Read command that was too large
 		abortConnection(state, readSet, writeSet);
+		return;
 	}
 	
 	uint32_t request = *((uint32_t *)readData);
@@ -406,6 +407,69 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		// Invalid state transition: wrong command
 		abortConnection(state, readSet, writeSet);
 	}
+}
+
+// called in state FD_STATE_OPLYR_NAME_READ after reading the other player's name has finished
+void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	short nameLen;
+	char * readData = state.GetRead(nameLen);
+	if (nameLen <= 0 || name >= MAX_NAME_LEN)
+	{
+		// Name was the wrong size
+		abortConnection(state, readSet, writeSet);
+		return;
+	}
+	
+	std::string otherPlayer(readData, nameLen);
+	FdState * otherFd = findByName(otherPlayer);
+	if (nullptr == otherFd)
+	{
+		// No such player
+		uint32_t response = ACTION_INVITE_RESPONSE;
+		response | INVITE_RESPONSE_NO;
+		state.SetState(FD_STATE_GAME_REQ_REJECT);
+		// Switch to write
+		FD_SET(state.GetFD(), &writeSet);
+		FD_CLR(state.GetFD(), &readSet);
+		response = htonl(response);
+		state.SetWrite((char *)&response, 32/8);
+	}
+	else
+	{
+		// Ask other player if they want to play
+		// Switch to write with other player
+		FD_SET(otherFd->GetFD(), &writeSet);
+		FD_CLR(otherFd->GetFD(), &readSet);
+		otherFd->SetState(FD_STATE_INVITE);
+		uint32_t invitation = ACTION_INVITE_REQ;
+		uint32_t ourNameLen = state.GetName().length();
+		invitation = invitation | ourNameLen;
+		invitation = htonl(invitation);
+		std::string inviteandname((char *)&invitation, 32/8);
+		inviteandname += state.GetName();
+		otherFd->SetWrite(inviteandname.c_str(), (short)inviteandname.length());
+		
+		// remember who we asked to play (so they can find us for the response)
+		state.SetOtherPlayer(otherFd);
+		// Not reading or writing anymore, waiting on other player
+		state.SetState(FD_STATE_REQ_GAME);
+		FD_CLR(state.GetFD(), &readSet);
+	}
+}
+
+// Find the Fd that invited the one pointed to by "invitee"
+FdState * findFdByPastInvitation(FdState * invitee)
+{
+	FdState returnVal = nullptr;
+	for (auto& state: Fds)
+	{
+		if (state.GetState() == FD_STATE_INVITE_RESP_WAIT && state.GetOtherPlayer() == invitee)
+		{
+			returnVal = &state;
+		}
+	}
+	return returnVal;
 }
 
 int main(int argc, char ** argv)

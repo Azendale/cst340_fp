@@ -4,7 +4,7 @@ extern "C"
 	#include <unistd.h>
 }
 
-FdState::FdState(int Fd, short State): fd(Fd), state(State), name(""), otherPlayer(-1), readPtr(-1), writePtr(-1), readSize(0), writeSize(0), readBuf(nullptr), writeBuf(nullptr), readInProgress(false), writeInProgress(false)
+FdState::FdState(int Fd, short State): fd(Fd), state(State), name(""), otherPlayer(nullptr), readPtr(-1), writePtr(-1), readSize(0), writeSize(0), readBuf(nullptr), writeBuf(nullptr), readInProgress(false), writeInProgress(false)
 {
 	
 }
@@ -48,14 +48,14 @@ std::string FdState::GetName() const
 	return this->name;
 }
 
-int FdState::GetOtherPlayer() const
+FdState * FdState::GetOtherPlayer() const
 {
 	return otherPlayer;
 }
 
-void FdState::SetOtherPlayer(int newOtherPlayer)
+void FdState::SetOtherPlayer(FdState * other)
 {
-	this->otherPlayer = newOtherPlayer;
+	this->otherPlayer = other;
 }
 
 // Reads once and returns 

@@ -4,6 +4,8 @@
 #define ACTION_NAME_IS_YOURS 0x0c000000
 #define ACTION_REQ_PLAYERS_LIST 0x10000000
 #define ACTION_PLAY_PLAYERNAME 0x14000000
+#define ACTION_INVITE_RESPONSE 0x18000000
+#define ACTION_INVITE_REQ 0x1c000000
 
 // Mask for long transfer sizes: uses all extra space left after command bits for size
 #define LONG_TRANSFER_SIZE_MASK ~ACTION_MASK
@@ -11,4 +13,6 @@
 // Up to 255 chars/bytes
 #define TRANSFER_SIZE_MASK 0x000000FF
 
+#define INVITE_RESPONSE_NO 0
+#define INVITE_RESPONSE_YES 1
 #define MAX_NAME_LEN 64
