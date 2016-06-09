@@ -503,16 +503,17 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		return;
 	}
 	
+	// Find matching other connection
+	FdState * inviter = findFdByPastInvitation(&state);
+	if (nullptr == inviter)
+	{
+		abortConnection(state, readSet, writeSet);
+		return;
+	}
+	
 	if (response & INVITE_RESPONSE_YES)
 	{
 		// Answered yes
-		// Find matching other connection
-		FdState * inviter = findFdByPastInvitation(state.GetFD());
-		if (nullptr == inviter)
-		{
-			abortConnection(state, readSet, writeSet);
-			return;
-		}
 		// other connection goes into FD_STATE_GAME_REQ_ACCEPT, which will be followed by FD_STATE_GAME_OFD_MOVE when the write finishes
 		inviter->SetState(FD_STATE_GAME_REQ_ACCEPT);
 		uint32_t inviterResponse = ACTION_INVITE_RESPONSE;
@@ -522,7 +523,7 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		FD_SET(inviter->GetFD(), &writeSet);
 		
 		// This connection goes into FD_STATE_GAME_THISFD_MOVE
-		state.SetState(FD_STATE_GAME_THISFD_MOVE);
+		state.SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
 		state.SetRead(32/8);
 		// This connection should already be in the read list
 	}
