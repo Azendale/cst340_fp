@@ -61,6 +61,12 @@ public:
 	void SetRead(short size);
 	// Get what was read and how long it is
 	char * GetRead(short & size);
+	// Set that the last move this FD did was not a win
+	void ClearLastMoveWin();
+	// Set that the last move this FD did was a win
+	void SetLastMoveWin();
+	// See if the last move this FD did was a win
+	bool GetLastMoveWin();
 private:
 	int fd;
 	short state;
@@ -74,4 +80,5 @@ private:
 	char * writeBuf;
 	bool readInProgress;
 	bool writeInProgress;
+	bool lastMoveWin;
 };

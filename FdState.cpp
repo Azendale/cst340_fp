@@ -4,7 +4,7 @@ extern "C"
 	#include <unistd.h>
 }
 
-FdState::FdState(int Fd, short State): fd(Fd), state(State), name(""), otherPlayer(nullptr), readPtr(-1), writePtr(-1), readSize(0), writeSize(0), readBuf(nullptr), writeBuf(nullptr), readInProgress(false), writeInProgress(false)
+FdState::FdState(int Fd, short State): fd(Fd), state(State), name(""), otherPlayer(nullptr), readPtr(-1), writePtr(-1), readSize(0), writeSize(0), readBuf(nullptr), writeBuf(nullptr), readInProgress(false), writeInProgress(false), lastMoveWin(false)
 {
 	
 }
@@ -21,6 +21,21 @@ FdState::~FdState()
 	delete [] writeBuf;
 	writeBuf = nullptr;
 	writePtr = -1;
+}
+
+void FdState::ClearLastMoveWin()
+{
+	lastMoveWin = false;
+}
+
+void FdState::SetLastMoveWin()
+{
+	lastMoveWin = true;
+}
+
+bool FdState::GetLastMoveWin()
+{
+	return lastMoveWin;
 }
 
 int FdState::GetFD() const
