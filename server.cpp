@@ -472,6 +472,15 @@ FdState * findFdByPastInvitation(FdState * invitee)
 	return returnVal;
 }
 
+// Reads the response after a connection has been invited to a game
+void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	// Need to find out if they said yes or no
+	short readSize;
+	char * readData = state.GetRead(readSize);
+}
+
+
 int main(int argc, char ** argv)
 {
 	int maxFd = 1;
@@ -574,7 +583,7 @@ int main(int argc, char ** argv)
 					}
 					else if (FD_STATE_OPLYR_NAME_READ == state)
 					{
-						
+						otherPlayerNameRead(it, readSet, writeSet);
 					}
 				}
 			}
