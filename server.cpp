@@ -706,7 +706,7 @@ int main(int argc, char ** argv)
 					}
 					else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
 					{
-						
+						thisFdMoveRead(it, readSet, writeSet);
 					}
 					else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
 					{
