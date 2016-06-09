@@ -602,11 +602,25 @@ void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// If the game was won, set up a lobby read and go to state FD_STATE_LOBBY
+	if (state.GetLastMoveWin())
+	{
+		state.SetState(FD_STATE_LOBBY);
+		state.SetRead(32/8);
+	}
+	else
 	// Otherwise:
-	// Set this connection state to FD_STATE_GAME_OFD_MOVE
-	// Remove this connection from all lists
-	// Set pair connection to state FD_STATE_GAME_THISFD_MOVE
-	// Put the other connection in the read list
+	{
+		// Set this connection state to FD_STATE_GAME_OFD_MOVE
+		state.SetState(FD_STATE_GAME_OFD_MOVE);
+		// Remove this connection from all lists
+		FD_CLR(state.GetFD(), &readList);
+		FD_CLR(state.GetFD(), &writeList);
+		// Set pair connection to state FD_STATE_GAME_THISFD_MOVE
+		state.GetOtherPlayer()->SetState(FD_STATE_GAME_THISFD_MOVE);
+		// Put the other connection in the read list
+		FD_SET(state.GetOtherPlayer()->GetFD(), &readList);
+		state.GetOtherPlayer()->SetRead(32/8);
+	}
 }
 
 // After the other connection's move has been written to this connection (called after write in state FD_STATE_GAME_OFD_MOVE)
@@ -767,7 +781,7 @@ int main(int argc, char ** argv)
 					}
 					else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
 					{
-						
+						thisFdMoveResultsWrite(it, readSet, writeSet);
 					}
 					else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
 					{
