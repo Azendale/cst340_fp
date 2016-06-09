@@ -570,6 +570,30 @@ void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetState(FD_STATE_GAME_WAIT_OFD_MOVE);
 }
 
+// Called after a read of a move from this FD (called after a read in state FD_STATE_GAME_THISFD_MOVE)
+void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	
+}
+
+// Called after writing results of this connections move to this connection (called after write in state FD_STATE_GAME_THISFD_MOVE_RESULTS)
+void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	
+}
+
+// After the other connection's move has been written to this (called after write in state FD_STATE_GAME_OFD_MOVE)
+void oFdMoveWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	
+}
+
+// Called after a read from this connection of the results of the other FD's move (called after read from state FD_STATE_GAME_OFD_MOVE_RESULTS)
+void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	
+}
+
 int main(int argc, char ** argv)
 {
 	int maxFd = 1;
@@ -632,7 +656,7 @@ int main(int argc, char ** argv)
 					// We're done reading a chunk, handle the result
 					if (FD_STATE_ACCEPT_SOCK == state)
 					{
-						
+						acceptConnection(thisFD, readSet);
 					}
 					else if (FD_STATE_ANON == state)
 					{
