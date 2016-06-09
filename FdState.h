@@ -14,11 +14,11 @@
 
 // Waiting/reading this FD's move
 #define FD_STATE_GAME_WAIT_THISFD_MOVE 6
-// Waiting for other FD to move/writing move results to this FD
+// Waiting for other FD to give move results/writing move results to this FD
 #define FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS 7
 // Waiting for other player to move/writing move to this fd
 #define FD_STATE_GAME_WAIT_OFD_MOVE 8
-// Reading results of other connections move from client
+// Reading results of other connection's move from this client
 #define FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS 9
 
 #define FD_STATE_WAIT_QUIT_ACK 10

@@ -564,7 +564,7 @@ void afterWriteReject(FdState & state, fd_set & readSet, fd_set & writeSet)
 // Should be called after successfull write in FD_STATE_GAME_REQ_ACCEPT
 void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	// switch to state FD_STATE_AME_OFD_MOVE (which is waiting for other person to move state)
+	// switch to state FD_STATE_GAME_OFD_MOVE (which is waiting for other person to move state)
 	// Take this FD out of the write list, and don't at it to the read or write, because we are waiting on the other connection in the game
 	FD_CLR(state.GetFD(), &writeSet);
 	state.SetState(FD_STATE_GAME_WAIT_OFD_MOVE);
@@ -573,25 +573,36 @@ void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 // Called after a read of a move from this FD (called after a read in state FD_STATE_GAME_THISFD_MOVE)
 void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	// Clear this FD from read list so it is in no lists
+	// Put this FD in state FD_STATE_GAME_THISFD_MOVE_RESULTS
+	// Set up other FD (whose state should be FD_STATE_GAME_OFD_MOVE) to write move
+	// Put other FD in write mode
 }
 
 // Called after writing results of this connections move to this connection (called after write in state FD_STATE_GAME_THISFD_MOVE_RESULTS)
 void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	// If the game was won, set up a lobby read and go to state FD_STATE_LOBBY
+	// Otherwise:
+	// Set this connection state to FD_STATE_GAME_OFD_MOVE
+	// Remove this connection from all lists
+	// Set pair connection to state FD_STATE_GAME_THISFD_MOVE
+	// Put the other connection in the read list
 }
 
-// After the other connection's move has been written to this (called after write in state FD_STATE_GAME_OFD_MOVE)
+// After the other connection's move has been written to this connection (called after write in state FD_STATE_GAME_OFD_MOVE)
 void oFdMoveWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	// Put this connection in read list and make sure it's not in the write list anymore
+	// set this connection's state to FD_STATE_GAME_OFD_MOVE_RESULTS
 }
 
 // Called after a read from this connection of the results of the other FD's move (called after read from state FD_STATE_GAME_OFD_MOVE_RESULTS)
 void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	// Check if that was a winning move. If so, set a flag on the other connection & remove the pair pointers
+	// Set other connection to state FD_STATE_GAME_THISFD_MOVE_RESULTS
+	// Put other connection in write list
 }
 
 int main(int argc, char ** argv)
