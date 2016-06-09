@@ -8,9 +8,6 @@
 // Reads coming out of FD_STATE_ANON_NAME_SIZE will be governed by the size sent earlier in the transition from FD_STATE_ANON to FD_STATE_ANON_NAME_SIZE
 // We know the name size, reading the name is the next transition
 #define FD_STATE_ANON_NAME_SIZE 2
-// Writes to FD_STATE_NAME_REQUESTED will be 32 bits
-
-#define FD_STATE_NAME_REQUESTED 3
 #define FD_STATE_LOBBY 4
 #define FD_STATE_REQ_GAME 5
 #define FD_STATE_GAME_WAIT_THISFD_MOVE 6
@@ -22,6 +19,10 @@
 #define FD_STATE_NAME_REJECT 11
 // Name was accepted. Has this state during the duration of writing the accept message
 #define FD_STATE_NAME_ACCEPT 12
+// Names list was requested from lobby state, in the process of writing the name list len
+#define FD_STATE_REQ_NAME_LIST 13
+// Names list in transmission
+#define FD_STATE_REQ_NAME_LIST_SENDING 14
 
 class FdState
 {

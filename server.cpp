@@ -302,6 +302,7 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
+// In state FD_STATE_NAME_REJECT after successfully writing rejection. Switches to listing in anon state
 void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to read
@@ -313,6 +314,7 @@ void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetRead(32/8);
 }
 
+// In state FD_STATE_NAME_ACCEPT after successfully writing response. Switches to listing in lobby mode
 void nameAcceptAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to read to listen for name listing command
@@ -342,6 +344,37 @@ void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSe
 	state.SetRead(sizeof(uint32_t));
 	FD_CLR(state.GetFD(), &writeSet);
 	FD_SET(state.GetFD(), &readSet);
+}
+
+// In state FD_STATE_LOBBY, after successfully reading
+void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	// FD can request to play other player
+	// FD can request player list
+	short readSize;
+	char * readData = state.GetRead(readSize);
+	if (32/8 == readSize)
+	{
+		uint32_t request = *((uint32_t *)readData);
+		if ((ACTION_REQ_PLAYERS_LIST & ACTION_MASK) == request)
+		{
+			
+		}
+		else if ((ACTION_PLAY_PLAYERNAME & ACTION_MASK) == request)
+		{
+			
+		}
+		else
+		{
+			// Invalid state transition: wrong command
+			abortConnection(state, readSet, writeSet);
+		}
+	}
+	else
+	{
+		// Read command that was too large
+		abortConnection(state, readSet, writeSet);
+	}
 }
 
 int main(int argc, char ** argv)
@@ -416,10 +449,6 @@ int main(int argc, char ** argv)
 					{
 						nameRead(it, readSet, writeSet);
 					}
-					else if (FD_STATE_NAME_REQUESTED == state)
-					{
-						
-					}
 					else if (FD_STATE_LOBBY == state)
 					{
 						
@@ -466,10 +495,6 @@ int main(int argc, char ** argv)
 				{
 					// Fd ready for write
 					if (FD_STATE_ANON == state)
-					{
-						
-					}
-					else if (FD_STATE_NAME_REQUESTED == state)
 					{
 						
 					}
