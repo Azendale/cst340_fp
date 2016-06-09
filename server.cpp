@@ -482,7 +482,7 @@ int main(int argc, char ** argv)
 					}
 					else if (FD_STATE_LOBBY == state)
 					{
-						
+						lobbyRead(it, readSet, writeSet);
 					}
 					else if (FD_STATE_REQ_GAME == state)
 					{
@@ -505,6 +505,10 @@ int main(int argc, char ** argv)
 						
 					}
 					else if (FD_STATE_WAIT_QUIT_ACK == state)
+					{
+						
+					}
+					else if (FD_STATE_OPLYR_NAME_READ == state)
 					{
 						
 					}
