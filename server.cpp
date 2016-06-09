@@ -525,6 +525,8 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		// This connection goes into FD_STATE_GAME_THISFD_MOVE
 		state.SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
 		state.SetRead(32/8);
+		// The other connection already has our address, but we need to set the reverse
+		state.SetOtherPlayer(inviter);
 		// This connection should already be in the read list
 	}
 	else
@@ -550,14 +552,22 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 // Should be called after successfull write in FD_STATE_GAME_REQ_REJECT
 void afterWriteReject(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	// Switch to reading
+	FD_CLR(state.GetFD(), &writeSet);
+	// Set up for a read from the lobby
+	FD_SET(state.GetFD(), &readSet);
+	state.SetRead(32/8);
+	state.SetState(FD_STATE_LOBBY);
 }
 
 
 // Should be called after successfull write in FD_STATE_GAME_REQ_ACCEPT
 void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
-	
+	// switch to state FD_STATE_AME_OFD_MOVE (which is waiting for other person to move state)
+	// Take this FD out of the write list, and don't at it to the read or write, because we are waiting on the other connection in the game
+	FD_CLR(state.GetFD(), &writeSet);
+	state.SetState(FD_STATE_GAME_WAIT_OFD_MOVE);
 }
 
 int main(int argc, char ** argv)
