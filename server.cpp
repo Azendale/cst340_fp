@@ -739,6 +739,14 @@ int main(int argc, char ** argv)
 					{
 						writeGameInvite(it, readSet, writeSet);
 					}
+					else if (FD_STATE_GAME_REQ_ACCEPT == state)
+					{
+						afterWriteAccept(it, readSet, writeSet);
+					}
+					else if (FD_STATE_GAME_REQ_REJECT == state)
+					{
+						afterWriteReject(it, readSet, writeSet);
+					}
 				}
 			}
 		}
