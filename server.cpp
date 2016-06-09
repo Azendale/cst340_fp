@@ -574,9 +574,28 @@ void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Clear this FD from read list so it is in no lists
+	FD_CLR(state.GetFD(), &readList);
+	FD_CLR(state.GetFD(), &writeList);
 	// Put this FD in state FD_STATE_GAME_THISFD_MOVE_RESULTS
+	state.SetState(FD_STATE_GAME_THISFD_MOVE_RESULTS);
+	
+	// Get the move
+	short readSize;
+	char * readData = state.GetRead(readSize);
+	if (readSize != 32/8)
+	{
+		
+		abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
+		abortConnection(state, readSet, writeSet);
+		return;
+	}
+	
 	// Set up other FD (whose state should be FD_STATE_GAME_OFD_MOVE) to write move
+	state.GetOtherPlayer()->SetWrite(readData, readSize);
+	
 	// Put other FD in write mode
+	FD_SET(state.GetOtherPlayer()->GetFD(), &writeList);
+	// Other FD should already be in the state FD_STATE_GAME_OFD_MOVE
 }
 
 // Called after writing results of this connections move to this connection (called after write in state FD_STATE_GAME_THISFD_MOVE_RESULTS)
