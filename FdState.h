@@ -19,10 +19,10 @@
 #define FD_STATE_NAME_REJECT 11
 // Name was accepted. Has this state during the duration of writing the accept message
 #define FD_STATE_NAME_ACCEPT 12
-// Names list was requested from lobby state, in the process of writing the name list len
+// Names list was requested from lobby state, in the process of writing the name list
 #define FD_STATE_REQ_NAME_LIST 13
-// Names list in transmission
-#define FD_STATE_REQ_NAME_LIST_SENDING 14
+// Reading name of other player to play
+#define FD_STATE_OPLYR_NAME_READ 14
 
 class FdState
 {
@@ -41,7 +41,7 @@ public:
 	// Writes once and returns true if that's all we were trying to write
 	int Write();
 	// Set up what we want to write
-	void SetWrite(char * buff, short size);
+	void SetWrite(const char * buff, short size);
 	// Set how much we want to read
 	void SetRead(short size);
 	// Get what was read and how long it is

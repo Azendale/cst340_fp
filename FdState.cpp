@@ -111,7 +111,7 @@ int FdState::Write()
 }
 
 // Set up what we want to write
-void FdState::SetWrite(char * buff, short size)
+void FdState::SetWrite(const char * buff, short size)
 {
 	if (size > 0)
 	{

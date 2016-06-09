@@ -346,6 +346,22 @@ void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSe
 	FD_SET(state.GetFD(), &readSet);
 }
 
+std::string GenerateNetNameList()
+{
+	std::string nameList = getNameList();
+	uint32_t len = nameList.length();
+	if (len >= LONG_TRANSFER_SIZE_MASK)
+	{
+		nameList = std::string("");
+		len = 0;
+	}
+	len = htonl(len);
+	// Pack bytes of length into first 4 chars of string
+	std::string returnString(((char *)&len), 32/8);
+	returnString += nameList;
+	return returnString;
+}
+
 // In state FD_STATE_LOBBY, after successfully reading
 void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
@@ -353,26 +369,41 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// FD can request player list
 	short readSize;
 	char * readData = state.GetRead(readSize);
-	if (32/8 == readSize)
+	if (32/8 != readSize)
 	{
-		uint32_t request = *((uint32_t *)readData);
-		if ((ACTION_REQ_PLAYERS_LIST & ACTION_MASK) == request)
+		// Read command that was too large
+		abortConnection(state, readSet, writeSet);
+	}
+	
+	uint32_t request = *((uint32_t *)readData);
+	request = ntohl(request);
+	if ((ACTION_REQ_PLAYERS_LIST & ACTION_MASK) == request)
+	{
+		std::string list = GenerateNetNameList();
+		state.SetWrite(list.c_str(), (short)(list.length()));
+		// Switch to write
+		FD_SET(state.GetFD(), &writeSet);
+		FD_CLR(state.GetFD(), &readSet);
+		state.SetState(FD_STATE_REQ_NAME_LIST);
+	}
+	else if ((ACTION_PLAY_PLAYERNAME & ACTION_MASK) == request)
+	{
+		uint32_t nameLen = request & TRANSFER_SIZE_MASK;
+		if (nameLen < MAX_NAME_LEN)
 		{
-			
-		}
-		else if ((ACTION_PLAY_PLAYERNAME & ACTION_MASK) == request)
-		{
-			
+			// Switch to name reading state
+			state.SetRead(nameLen);
+			state.SetState(FD_STATE_OPLYR_NAME_READ);
 		}
 		else
 		{
-			// Invalid state transition: wrong command
+			// name too long
 			abortConnection(state, readSet, writeSet);
 		}
 	}
 	else
 	{
-		// Read command that was too large
+		// Invalid state transition: wrong command
 		abortConnection(state, readSet, writeSet);
 	}
 }
