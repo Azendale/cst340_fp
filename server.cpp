@@ -472,12 +472,51 @@ FdState * findFdByPastInvitation(FdState * invitee)
 	return returnVal;
 }
 
-// Reads the response after a connection has been invited to a game
+// Switches state of the invited player to reading their response after we have sent them the invatiation. Should be called when the invited player connection finishes a write in FD_STATE_GAME_WRITE
+void writeGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	// Switch to reading now
+	FD_CLR(state.GetFD(), &writeSet);
+	FD_SET(state.GetFD(), &readSet);
+	// Switch to the state that means we are waiting for a response
+	state.SetState(FD_STATE_GAME_INVITE_RESP_WAIT);
+}
+
+// Reads the response after a connection has been invited to a game, should be called after successful read in state FD_STATE_GAME_INVITE_RESP_WAIT
 void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Need to find out if they said yes or no
 	short readSize;
 	char * readData = state.GetRead(readSize);
+	if (readSize != 32/8)
+	{
+		// Response read was not the right size
+		abortConnection(state, readSet, writeSet);
+		return;
+	}
+	
+	uint32_t response = ntohl(*((uint32_t *)readData));
+	if ((response & ACTION_MASK) != ACTION_INVITE_RESPONSE)
+	{
+		// Invalid state transition: not a response to the request
+		abortConnection(state, readSet, writeSet);
+		return;
+	}
+	
+	if (response & INVITE_RESPONSE_YES)
+	{
+		// Answered yes
+		// Find matching other connection
+		// other connection goes into FD_STATE_GAME_REQ_ACCEPT, which will be followed by FD_STATE_GAME_OFD_MOVE when the write finishes
+		// This connection goes into FD_STATE_GAME_THISFD_MOVE
+	}
+	else
+	{
+		// Answered no
+		// this connection goes into FD_STATE_LOBBY, and tries to read again
+		// Other fd parter variable cleared
+		// Other FD goes into FD_STATE_GAME_REQ_REJECT
+	}
 }
 
 
@@ -585,6 +624,10 @@ int main(int argc, char ** argv)
 					{
 						otherPlayerNameRead(it, readSet, writeSet);
 					}
+					else if (FD_STATE_GAME_INVITE_RESP_WAIT == state)
+					{
+						readStateGameInvite(it, readSet, writeSet);
+					}
 				}
 			}
 			if (FD_ISSET(thisFD, &writeSet))
@@ -641,6 +684,10 @@ int main(int argc, char ** argv)
 					else if (FD_STATE_NAME_ACCEPT == state)
 					{
 						nameAcceptAfterWrite(it, readSet, writeSet);
+					}
+					else if (FD_STATE_GAME_INVITE == state)
+					{
+						writeGameInvite(it, readSet, writeSet);
 					}
 				}
 			}
