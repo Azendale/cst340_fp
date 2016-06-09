@@ -414,7 +414,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	short nameLen;
 	char * readData = state.GetRead(nameLen);
-	if (nameLen <= 0 || name >= MAX_NAME_LEN)
+	if (nameLen <= 0 || nameLen >= MAX_NAME_LEN)
 	{
 		// Name was the wrong size
 		abortConnection(state, readSet, writeSet);
@@ -427,7 +427,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	{
 		// No such player
 		uint32_t response = ACTION_INVITE_RESPONSE;
-		response | INVITE_RESPONSE_NO;
+		response = response | INVITE_RESPONSE_NO;
 		state.SetState(FD_STATE_GAME_REQ_REJECT);
 		// Switch to write
 		FD_SET(state.GetFD(), &writeSet);
@@ -441,7 +441,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		// Switch to write with other player
 		FD_SET(otherFd->GetFD(), &writeSet);
 		FD_CLR(otherFd->GetFD(), &readSet);
-		otherFd->SetState(FD_STATE_INVITE);
+		otherFd->SetState(FD_STATE_GAME_INVITE);
 		uint32_t invitation = ACTION_INVITE_REQ;
 		uint32_t ourNameLen = state.GetName().length();
 		invitation = invitation | ourNameLen;
@@ -453,7 +453,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		// remember who we asked to play (so they can find us for the response)
 		state.SetOtherPlayer(otherFd);
 		// Not reading or writing anymore, waiting on other player
-		state.SetState(FD_STATE_REQ_GAME);
+		state.SetState(FD_STATE_REQD_GAME);
 		FD_CLR(state.GetFD(), &readSet);
 	}
 }
@@ -461,10 +461,10 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 // Find the Fd that invited the one pointed to by "invitee"
 FdState * findFdByPastInvitation(FdState * invitee)
 {
-	FdState returnVal = nullptr;
+	FdState * returnVal = nullptr;
 	for (auto& state: Fds)
 	{
-		if (state.GetState() == FD_STATE_INVITE_RESP_WAIT && state.GetOtherPlayer() == invitee)
+		if (state.GetState() == FD_STATE_GAME_INVITE_RESP_WAIT && state.GetOtherPlayer() == invitee)
 		{
 			returnVal = &state;
 		}
@@ -548,7 +548,7 @@ int main(int argc, char ** argv)
 					{
 						lobbyRead(it, readSet, writeSet);
 					}
-					else if (FD_STATE_REQ_GAME == state)
+					else if (FD_STATE_REQD_GAME == state)
 					{
 						
 					}
@@ -601,7 +601,7 @@ int main(int argc, char ** argv)
 					{
 						
 					}
-					else if (FD_STATE_REQ_GAME == state)
+					else if (FD_STATE_REQD_GAME == state)
 					{
 						
 					}

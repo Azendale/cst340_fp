@@ -10,7 +10,7 @@
 #define FD_STATE_ANON_NAME_SIZE 2
 #define FD_STATE_LOBBY 4
 // Waiting for other player to respond if they want to play or not
-#define FD_STATE_REQ_GAME 5
+#define FD_STATE_REQD_GAME 5
 #define FD_STATE_GAME_WAIT_THISFD_MOVE 6
 #define FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS 7
 #define FD_STATE_GAME_WAIT_OFD_MOVE 8
