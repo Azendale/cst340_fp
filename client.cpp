@@ -138,12 +138,12 @@ int connectToServer(program_options & options)
 	return sockfd;
 }
 
-std::string getUsername()
+std::string getUsername(std::string prompt)
 {
 	std::string returnVal;
 	while (returnVal.length() < 1 || returnVal.length() >= MAX_NAME_LEN)
 	{
-		std::cout << "Please enter the username you would like to use. It must be less than " << MAX_NAME_LEN << " characters long: ";
+		std::cout << prompt << " Input must be less than " << MAX_NAME_LEN << " characters long: ";
 		std::cin >> returnVal;
 	}
 	return returnVal;
@@ -255,8 +255,7 @@ int writeData(int fd, const char * buf, int bytes)
 int writeString(int fd, const std::string & str, uint32_t action)
 {
 	uint32_t len = str.length();
-	len = htonl(len);
-	action = action | len;
+	action = action | htonl(len);
 	if (sizeof(uint32_t) != writeData(fd, ((char *)&action), sizeof(uint32_t)))
 	{
 		return -1;
@@ -274,11 +273,11 @@ int main(int argc, char ** argv)
 	Init_program_options(&options);
 	parseOptions(argc, argv, options);
 	int connection = connectToServer(options);
-	std::string username = getUsername();
 	
 	bool nameAccepted = false;
 	while (!nameAccepted)
 	{
+		std::string username = getUsername("Enter the username you want to use.");
 		if (0 > writeString(connection, username, ACTION_NAME_REQUEST))
 		{
 			return -1;
@@ -304,9 +303,92 @@ int main(int argc, char ** argv)
 		}
 	}
 	
+	bool quit = false;
+	while (!quit)
+	{
+		// Need to get list of other players
+		uint32_t listReq = ACTION_REQ_PLAYERS_LIST;
+		if (sizeof(uint32_t) != writeData(connection, (char *)&listReq, sizeof(uint32_t)))
+		{
+			quit = true;
+			break;
+		}
+		std::cout << "Players list: \n";
+		std::cout << readLongString(connection) << "\nPick a player to play, or wait to allow someone else to invite you:" << std::endl;
+		fd_set readSet;
+		FD_ZERO(&readSet);
+		// Listen for user input or Network input
+		FD_SET(0, &readSet);
+		FD_SET(connection, &readSet);
+		
+		uint32_t request;
+		short reqPtr = 0;
+		char otherUser[MAX_NAME_LEN];
+		short otherUserPtr = 0;
+		memset(otherUser, 0, MAX_NAME_LEN);
+		
+		int continueRead = 1;
+		
+		while (select(10, &readSet, NULL, NULL, NULL) >= 0 && 1 == continueRead)
+		{
+			if (FD_ISSET(connection, &readSet))
+			{
+				// connection ready
+				char letter;
+				if (1 != read(0, &letter, 1))
+				{
+					continueRead = -3;
+				}
+				else
+				{
+					*(((char *)&request)+reqPtr) = letter;
+					++reqPtr;
+					if (reqPtr == sizeof(uint32_t))
+					{
+						continueRead = 2;
+					}
+				}
+			}
+			else if (FD_ISSET(0, &readSet))
+			{
+				// Stdin ready
+				char letter;
+				if (1 != read(0, &letter, 1))
+				{
+					continueRead = -1;
+				}
+				if ('\n' == letter)
+				{
+					continueRead = 2;
+				}
+				else
+				{
+					otherUser[otherUserPtr] = letter;
+					++otherUserPtr;
+					if (otherUserPtr == MAX_NAME_LEN)
+					{
+						continueRead = -2;
+					}
+				}
+			}
+			FD_ZERO(&readSet);
+			FD_SET(0, &readSet);
+			FD_SET(connection, &readSet);
+		}
+		// Need to select whether we read from the console or from the connection to see if we get asked to play or if we ask to play
+		if (continueRead == 2)
+		{
+			// We picked a player
+		}
+		else if (continueRead == 3)
+		{
+			// Another player picked us
+		}
+		Game game;
 	
-	Game game;
+	}
 	
-	
-return 0;
+	// Close connection
+	close(connection);
+	return 0;
 }
