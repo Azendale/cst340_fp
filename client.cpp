@@ -267,6 +267,23 @@ int writeString(int fd, const std::string & str, uint32_t action)
 	return str.length() + 4;
 }
 
+void getPlayCoord(short &x, short &y)
+{
+	x = 0;
+	y = 0;
+	while (x < 1 || x > MAP_SIDE_SIZE)
+	{
+		std::cout << "Please enter the x coordinate you want to fire at: ";
+		std::cin >> x;
+	}
+	
+	while (y < 1 || y > MAP_SIDE_SIZE)
+	{
+		std::cout << "Please enter the y coordinate you want to fire at: ";
+		std::cin >> y;
+	}
+}
+
 int main(int argc, char ** argv)
 {
 	program_options options;
@@ -346,6 +363,7 @@ int main(int argc, char ** argv)
 					++reqPtr;
 					if (reqPtr == sizeof(uint32_t))
 					{
+						request = ntohl(request);
 						continueRead = 2;
 					}
 				}
@@ -393,10 +411,33 @@ int main(int argc, char ** argv)
 		else if (continueRead == 3)
 		{
 			// Another player picked us
+			char * otherPlayerName = new char[request&TRANSFER_SIZE_MASK];
 			// Get their name
+			if (request&TRANSFER_SIZE_MASK != readBytes(connection, otherPlayerName, request&TRANSFER_SIZE_MASK))
+			{
+				quit = true;
+				break;
+			}
+			std::string otherPlayer(otherPlayerName, request&TRANSFER_SIZE_MASK);
+			delete [] otherPlayerName;
 			// Ask if the user wants to accept
+			char userAnswer = 'u';
+			while (userAnswer != 'Y' && userAnswer !='y' && userAnswer != 'n' && userAnswer != 'N')
+			{
+				std::cout << "\n\n" << otherPlayer << " has invited you to a game. Do you want to play? [y/n]\n";
+				std::cin >> userAnswer;
+			}
 			// Send response
-			//  if answer is no, start the loop over
+			if (userAnswer == 'Y' || userAnswer == 'y')
+			{
+				// respond with an accept
+			}
+			else
+			{
+				// Respond with a reject
+				// if answer is no, start the loop over
+				break;
+			}
 		}
 		
 		Game game;
@@ -407,6 +448,11 @@ int main(int argc, char ** argv)
 		if (continueRead == 3)
 		{
 			// Do our first turn
+			std::cout << "Because you were invited to a game, you get the first move. \n";
+			short x, y;
+			getPlayCoord(x, y);
+			// Send our move
+			// Get the results and print them
 		}
 		// Play the rest of the game
 	}
