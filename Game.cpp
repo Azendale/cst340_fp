@@ -151,7 +151,7 @@ void Game::CalculateMoveResults(short x, short y, bool & hit, short & shipSize, 
 			sink = true;
 			// Check if that sunk all of the fleet
 			bool allHit = true;
-			for (int i = 0; i < FLEETSIZE, ++i)
+			for (int i = 0; i < FLEETSIZE; ++i)
 			{
 				if (!(fleet[i].Sunk()))
 				{

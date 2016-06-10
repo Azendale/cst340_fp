@@ -43,11 +43,11 @@ bool Ship::CoordIsOnShip(const coord & location) const
 	}
 }
 
-bool Ship::Hit(short x, short y)
+bool Ship::Hit(short hitx, short hity)
 {
 	coord location;
-	location.x = x;
-	location.y = y;
+	location.x = hitx;
+	location.y = hity;
 	if (!CoordIsOnShip(location))
 	{
 		return false;
