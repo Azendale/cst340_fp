@@ -42,3 +42,27 @@ bool Ship::CoordIsOnShip(const coord & location) const
 		return false;
 	}
 }
+
+bool Ship::Hit(short x, short y)
+{
+	coord location;
+	location.x = x;
+	location.y = y;
+	if (!CoordIsOnShip(location))
+	{
+		return false;
+	}
+	++hitSpaces;
+	
+	return true;
+}
+
+bool Ship::Sunk() const
+{
+	return hitSpaces >= totalSpaces;
+}
+
+short Ship::GetSize() const
+{
+	return totalSpaces;
+}

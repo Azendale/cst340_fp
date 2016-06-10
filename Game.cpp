@@ -136,3 +136,38 @@ void Game::PlaceShips()
 		}
 	}
 }
+
+void Game::CalculateMoveResults(short x, short y, bool & hit, short & shipSize, bool & sink, bool & win)
+{
+	if (ocean[x][y].first != nullptr && !(ocean[x][y].second))
+	{
+		// A new hit
+		hit = true;
+		shipSize = ocean[x][y].first->GetSize();
+		// Did they sink a boat?
+		ocean[x][y].first->Hit(x, y);
+		if (ocean[x][y].first->Sunk())
+		{
+			sink = true;
+			// Check if that sunk all of the fleet
+			bool allHit = true;
+			for (int i = 0; i < FLEETSIZE, ++i)
+			{
+				if (!(fleet[i].Sunk()))
+				{
+					// This ship is still there
+					allHit = false;
+				}
+			}
+			win = allHit;
+		}
+	}
+	else
+	{
+		// Didn't hit anything
+		hit = false;
+		shipSize = 0;
+		sink = false;
+		win = false;
+	}
+}

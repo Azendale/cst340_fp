@@ -293,6 +293,21 @@ uint32_t encodeMove(short x, short y)
 	return ourMove;
 }
 
+void decodeMove(uint32_t response, short & x, short & y)
+{
+	response = ntohl(response);
+	x = (response & MOVE_X_COORD_MASK_UNSHIFTED)>>MOVE_X_COORD_SHIFT;
+	y = (response & MOVE_Y_COORD_MASK_UNSHIFTED)>>MOVE_Y_COORD_SHIFT;
+}
+
+uint32_t encodeMoveResults(short x, short y, bool hit, short shipSize, bool sink, bool win)
+{
+	uint32_t response = ACTION_MOVE_RESULTS;
+	blahdontcompile
+	response = htonl(response);
+	return response;
+}
+
 void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & sink, bool & win)
 {
 	response = ntohl(response);
@@ -324,23 +339,45 @@ void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & s
 	}
 }
 
-void outputMoveResults(bool hit, short shipSize, bool sink, bool win)
+void outputMoveResults(bool ourMove, bool hit, short shipSize, bool sink, bool win)
 {
-	if (win)
+	if (ourMove)
 	{
-		std::cout << "The last move was the winning move! Congratulations.\n";
-	}
-	if (sink)
-	{
-		std::cout << "The last move sunk the other player's " << shipSize << "-space ship.\n";
-	}
-	else if (hit)
-	{
-		std::cout << "The last move hit the other player's " << shipSize << "-space ship.\n";
+		if (win)
+		{
+			std::cout << "The last move was the winning move! Congratulations.\n";
+		}
+		if (sink)
+		{
+			std::cout << "The last move sunk the other player's " << shipSize << "-space ship.\n";
+		}
+		else if (hit)
+		{
+			std::cout << "The last move hit the other player's " << shipSize << "-space ship.\n";
+		}
+		else
+		{
+			std::cout << "The last move appears to have hit open ocean.\n";
+		}
 	}
 	else
 	{
-		std::cout << "The last move appears to have hit open ocean.\n";
+		if (win)
+		{
+			std::cout << "The other player's last move just won. (Sorry, maybe next time, right?)\n";
+		}
+		if (sink)
+		{
+			std::cout << "The other player's move sunk your " << shipSize << "-space ship.\n";
+		}
+		else if (hit)
+		{
+			std::cout << "The other player's move hit your " << shipSize << "-space ship.\n";
+		}
+		else
+		{
+			std::cout << "The other player's move hit open ocean.\n";
+		}
 	}
 }
 
@@ -556,6 +593,8 @@ int main(int argc, char ** argv)
 		
 		// Create the game
 		Game game;
+		// For the cordinates of the last move (both ours and theirs)
+		short x, y;
 		// For storing values unpacked and packed in move responses
 		bool hit;
 		short hitShipSize;
@@ -569,7 +608,6 @@ int main(int argc, char ** argv)
 		{
 			// Do our first turn
 			std::cout << "Because you were invited to a game, you get the first move. \n";
-			short x, y;
 			getPlayCoord(x, y);
 			// Send our move
 			// Encodes move, including net byte order
@@ -588,7 +626,7 @@ int main(int argc, char ** argv)
 			}
 			// Decodes from net order
 			decodeMoveResults(moveResults, hit, hitShipSize, sink, win);
-			outputMoveResults(hit, hitShipSize, sink, win);
+			outputMoveResults(true, hit, hitShipSize, sink, win);
 			if (win)
 			{
 				// Go back to the lobby
@@ -600,6 +638,37 @@ int main(int argc, char ** argv)
 		while (!won && !quit)
 		{
 			// Loop though turns, starting with them sending us a turn
+			std::cout << "Other players turn.\n";
+			
+			// Calculate the results of their move
+			game.CalculateMoveResults(x, y, hit, hitShipSize, sink, win);
+			// Output the results of their move to our player
+			outputMoveResults(false, hit, hitShipSize, sink, win);
+			std::cout << "Our turn.\n";
+			getPlayCoord(x, y);
+			// Send our move
+			// Encodes move, including net byte order
+			uint32_t ourMove = encodeMove(x, y);
+			if (sizeof(uint32_t) != writeData(connection, (char *)&ourMove, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
+			// Get the results and print them
+			uint32_t moveResults;
+			if (sizeof(uint32_t) != readBytes(connection, (char *)&moveResults, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
+			// Decodes from net order
+			decodeMoveResults(moveResults, hit, hitShipSize, sink, win);
+			outputMoveResults(true, hit, hitShipSize, sink, win);
+			if (win)
+			{
+				// Go back to the lobby
+				break;
+			}
 		}
 	}
 	

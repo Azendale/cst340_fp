@@ -10,6 +10,7 @@ public:
 	Game();
 	void PrintBoard() const;
 	void PlaceShips();
+	void CalculateMoveResults(short x, short y, bool & hit, short & shipSize, bool & sink, bool & win);
 	std::pair<Ship *, bool> ocean[MAP_SIDE_SIZE][MAP_SIDE_SIZE];
 	Ship fleet[FLEETSIZE];
 };
