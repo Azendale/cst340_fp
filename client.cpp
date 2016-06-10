@@ -324,6 +324,26 @@ void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & s
 	}
 }
 
+void outputMoveResults(bool hit, short shipSize, bool sink, bool win)
+{
+	if (win)
+	{
+		std::cout << "The last move was the winning move! Congratulations.\n"
+	}
+	if (sink)
+	{
+		std::cout << "The last move sunk the other player's " << shipSize << "-space ship.\n";
+	}
+	else if (hit)
+	{
+		std::cout << "The last move hit the other player's " << shipSize << "-space ship.\n";
+	}
+	else
+	{
+		std::cout << "The last move appears to have hit open ocean.\n";
+	}
+}
+
 int main(int argc, char ** argv)
 {
 	program_options options;
@@ -566,7 +586,14 @@ int main(int argc, char ** argv)
 				quit = true;
 				break;
 			}
-			
+			// Decodes from net order
+			decodeMoveResults(moveResults, hit, hitShipSize, sink, win);
+			outputMoveResults(hit, hitShipSize, sink, win);
+			if (win)
+			{
+				// Go back to the lobby
+				break;
+			}
 		}
 		// Play the rest of the game
 		bool won = false;
