@@ -9,6 +9,8 @@ CXX=g++
 CC=gcc
 
 OBJS = FdState.o \
+	Ship.o \
+	Game.o \
 
 all: client server
 
@@ -26,6 +28,6 @@ clean:
 server: $(OBJS) server.cpp
 	$(CXX) $(CXXFLAGS) $(OBJS) server.cpp -o server
 
-client: $(OBJS) client.c
-	$(CC) $(CFLAGS) $(OBJS) client.c -o client
+client: $(OBJS) client.cpp
+	$(CXX) $(CXXFLAGS) $(OBJS) client.cpp -o client
 

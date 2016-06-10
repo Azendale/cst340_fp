@@ -129,7 +129,7 @@ void Game::PlaceShips()
 		}
 		else
 		{
-			for (int j = newy; j < i+newx; ++j)
+			for (int j = newy; j < i+newy; ++j)
 			{
 				ocean[newx][j].first = &(fleet[i-1]);
 			}

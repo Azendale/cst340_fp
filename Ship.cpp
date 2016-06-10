@@ -15,11 +15,11 @@ void Ship::SetSize(short size)
 	totalSpaces = size;
 }
 
-void Ship::Place(bool horizontal, short x, short y)
+void Ship::Place(bool newhorizontal, short newx, short newy)
 {
-	this->horizontal = horizontal;
-	this->x = x;
-	this->y = y;
+	this->horizontal = newhorizontal;
+	this->x = newx;
+	this->y = newy;
 }
 
 bool Ship::CoordIsOnShip(const coord & location) const
