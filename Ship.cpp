@@ -1,8 +1,18 @@
 #include "Ship.h"
 
-Ship::Ship(int size): totalSpaces(size), hitSpaces(0), horizontal(false), x(-5), y(-5)
+Ship::Ship(short size): totalSpaces(size), hitSpaces(0), horizontal(false), x(-5), y(-5)
 {
 	
+}
+
+Ship::Ship(): totalSpaces(0), hitSpaces(0), horizontal(false), x(-5), y(-5)
+{
+	
+}
+
+void Ship::SetSize(short size)
+{
+	totalSpaces = size;
 }
 
 void Ship::Place(bool horizontal, short x, short y)

@@ -4,11 +4,13 @@
 class Ship
 {
 public:
-	Ship(int size);
+	Ship(short size);
+	Ship();
+	void SetSize(short size);
 	void Place(bool horizontal, short x, short y);
 	bool CoordIsOnShip(const coord & location) const;
-	int totalSpaces;
-	int hitSpaces;
+	short totalSpaces;
+	short hitSpaces;
 	bool horizontal;
 	short x;
 	short y;
