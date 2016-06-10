@@ -303,7 +303,23 @@ void decodeMove(uint32_t response, short & x, short & y)
 uint32_t encodeMoveResults(short x, short y, bool hit, short shipSize, bool sink, bool win)
 {
 	uint32_t response = ACTION_MOVE_RESULTS;
-	blahdontcompile
+	
+	response = response | ((x<<MOVE_X_COORD_SHIFT) & MOVE_X_COORD_MASK_UNSHIFTED);
+	response = response | ((y<<MOVE_Y_COORD_SHIFT) & MOVE_Y_COORD_MASK_UNSHIFTED);
+	if (hit)
+	{
+		response = response | MOVE_HIT_SHIP_MASK;
+		response = response | ((shipSize<<MOVE_SIZE_OF_HIT_SHIP_SHIFT)&MOVE_SIZE_OF_HIT_SHIP_MASK_UNSHIFTED);
+	}
+	if (sink)
+	{
+		response = response | MOVE_SINK_SHIP_MASK;
+	}
+	if (win)
+	{
+		response = response | WIN_BIT_MASK;
+	}
+	
 	response = htonl(response);
 	return response;
 }
