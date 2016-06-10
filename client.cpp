@@ -312,7 +312,7 @@ void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & s
 	{
 		sink = false;
 	}
-	if (response & MOVE_HIT_SHIPT_MASK)
+	if (response & MOVE_HIT_SHIP_MASK)
 	{
 		// Set ship size
 		hit = true;
@@ -328,7 +328,7 @@ void outputMoveResults(bool hit, short shipSize, bool sink, bool win)
 {
 	if (win)
 	{
-		std::cout << "The last move was the winning move! Congratulations.\n"
+		std::cout << "The last move was the winning move! Congratulations.\n";
 	}
 	if (sink)
 	{
@@ -558,7 +558,7 @@ int main(int argc, char ** argv)
 		Game game;
 		// For storing values unpacked and packed in move responses
 		bool hit;
-		short hitShipSize,
+		short hitShipSize;
 		bool sink;
 		bool win;
 		// Place ships
@@ -599,7 +599,7 @@ int main(int argc, char ** argv)
 		bool won = false;
 		while (!won && !quit)
 		{
-			// Loop though turns, starting with us
+			// Loop though turns, starting with them sending us a turn
 		}
 	}
 	
