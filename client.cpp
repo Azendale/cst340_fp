@@ -413,7 +413,7 @@ int main(int argc, char ** argv)
 			// Another player picked us
 			char * otherPlayerName = new char[request&TRANSFER_SIZE_MASK];
 			// Get their name
-			if (request&TRANSFER_SIZE_MASK != readBytes(connection, otherPlayerName, request&TRANSFER_SIZE_MASK))
+			if (!signEQunsign((request&TRANSFER_SIZE_MASK), readBytes(connection, otherPlayerName, request&TRANSFER_SIZE_MASK)))
 			{
 				quit = true;
 				break;
