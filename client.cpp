@@ -284,6 +284,46 @@ void getPlayCoord(short &x, short &y)
 	}
 }
 
+uint32_t encodeMove(short x, short y)
+{
+	uint32_t ourMove = ACTION_MOVE;
+	ourMove = ourMove | (MOVE_X_COORD_MASK_UNSHIFTED&(x<<MOVE_X_COORD_SHIFT));
+	ourMove = ourMove | (MOVE_Y_COORD_MASK_UNSHIFTED&(y<<MOVE_Y_COORD_SHIFT));
+	ourMove = htonl(ourMove);
+	return ourMove;
+}
+
+void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & sink, bool & win)
+{
+	response = ntohl(response);
+	if (response & WIN_YES)
+	{
+		win = true;
+	}
+	else
+	{
+		win = false;
+	}
+	if (response & MOVE_SINK_SHIP_MASK)
+	{
+		sink = true;
+	}
+	else
+	{
+		sink = false;
+	}
+	if (response & MOVE_HIT_SHIPT_MASK)
+	{
+		// Set ship size
+		hit = true;
+		shipSize = ((response & MOVE_SIZE_OF_HIT_SHIP_MASK_UNSHIFTED)>>MOVE_SIZE_OF_HIT_SHIP_SHIFT);
+	}
+	else
+	{
+		hit = false;
+	}
+}
+
 int main(int argc, char ** argv)
 {
 	program_options options;
@@ -494,11 +534,17 @@ int main(int argc, char ** argv)
 			}
 		}
 		
-		Game game;
 		// Create the game
+		Game game;
+		// For storing values unpacked and packed in move responses
+		bool hit;
+		short hitShipSize,
+		bool sink;
+		bool win;
+		// Place ships
 		game.PlaceShips();
 		game.PrintBoard();
-		// Place ships
+		
 		if (continueRead == 3)
 		{
 			// Do our first turn
@@ -506,10 +552,21 @@ int main(int argc, char ** argv)
 			short x, y;
 			getPlayCoord(x, y);
 			// Send our move
-			uint32_t ourMove = ACTION_MOVE;
-			ourMove = ourMove | (MOVE_X_COORD_MASK_UNSHIFTED&(x<<MOVE_X_COORD_SHIFT));
-			ourMove = ourMove | (MOVE_Y_COORD_MASK_UNSHIFTED&(y<<MOVE_Y_COORD_SHIFT));
+			// Encodes move, including net byte order
+			uint32_t ourMove = encodeMove(x, y);
+			if (sizeof(uint32_t) != writeData(connection, (char *)&ourMove, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
 			// Get the results and print them
+			uint32_t moveResults;
+			if (sizeof(uint32_t) != readBytes(connection, (char *)&moveResults, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
+			
 		}
 		// Play the rest of the game
 		bool won = false;
