@@ -20,10 +20,14 @@ Game::Game()
 
 void Game::PrintBoard() const
 {
-	std::cout << "\033[37m"; // Use white to draw
+	for (int x=1; x <= MAP_SIDE_SIZE; ++x)
+	{
+		std::cout << x << " ";
+	}
+	std::cout << "\n\033[37m"; // Use white to draw
 	for (int y=0; y < MAP_SIDE_SIZE; ++y)
 	{
-		std::cout << "\033[1m"; // Bold for the playing field
+		std::cout << "\033[1;37m"; // Bold for the playing field
 		for (int x=0; x < MAP_SIDE_SIZE; ++x)
 		{
 			if (ocean[x][y].first != nullptr)
@@ -34,7 +38,7 @@ void Game::PrintBoard() const
 				{
 					std::cout << "\033[31m"; // red for hits
 					// This square fired at
-					std::cout << " x";
+					std::cout << "<>";
 					std::cout << "\033[37m"; // Reset color after hit -- back to white
 				}
 				else
@@ -50,7 +54,7 @@ void Game::PrintBoard() const
 				if (ocean[x][y].second)
 				{
 					// This square fired at
-					std::cout << " x";
+					std::cout << "<>";
 				}
 				else
 				{
