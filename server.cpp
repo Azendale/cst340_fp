@@ -707,7 +707,10 @@ int main(int argc, char ** argv)
 		return -1;
 	}
 	
-	while (pselect(1, &readSet, &writeSet, NULL, NULL, &oldset) >= 0)
+	fd_set readSetSelectResults = readSet;
+	fd_set writeSetSelectResults = writeSet;
+	
+	while (pselect(maxFd+1, &readSetSelectResults, &writeSetSelectResults, NULL, NULL, &oldset) >= 0)
 	{
 		// Do some processing. Note that the process will not be
 		// interrupted while inside this loop.
@@ -715,7 +718,7 @@ int main(int argc, char ** argv)
 		{
 			int thisFD = it.GetFD();
 			short state = it.GetState();
-			if (FD_ISSET(thisFD, &readSet))
+			if (FD_ISSET(thisFD, &readSetSelectResults))
 			{
 				int readResult = it.Read();
 				if (readResult == 0)
@@ -780,7 +783,7 @@ int main(int argc, char ** argv)
 					}
 				}
 			}
-			if (FD_ISSET(thisFD, &writeSet))
+			if (FD_ISSET(thisFD, &writeSetSelectResults))
 			{
 				int writeResult = it.Write();
 				if (writeResult == 0)
@@ -850,5 +853,8 @@ int main(int argc, char ** argv)
 				}
 			}
 		}
+		// Retore the lists of things we want to check
+		readSetSelectResults = readSet;
+		writeSetSelectResults = writeSet;
 	}
 }
