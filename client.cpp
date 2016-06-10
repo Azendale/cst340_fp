@@ -167,28 +167,37 @@ int readBytes(int fd, char * buff, int toRead)
 	return readSoFar;
 }
 
+bool signEQunsign(int sign, unsigned int usign)
+{
+	if (sign < 0)
+	{
+		return false;
+	}
+	return ((unsigned int)sign) == usign;
+}
+
 std::string readLongString(int fd)
 {
 	int ReadCount = -1;
 	uint32_t len;
-	ReadCount = readBytes(fd, &len, 32/8);
-	if (ReadCount != 32/8)
+	ReadCount = readBytes(fd, ((char *)&len), sizeof(uint32_t));
+	if (ReadCount != sizeof(uint32_t))
 	{
 		return std::string("");
 	}
-	len = ntohl(*(uint32_t *)data);
+	len = ntohl(len);
 	len = len & LONG_TRANSFER_SIZE_MASK;
 	if (len < 1)
 	{
 		return std::string("");
 	}
-	data = new char[len];
+	char * data = new char[len];
 	if (!data)
 	{
 		return std::string("");
 	}
 	ReadCount = readBytes(fd, data, len);
-	if (ReadCount != len)
+	if (!signEQunsign(ReadCount, len))
 	{
 		return std::string("");
 	}
@@ -201,24 +210,24 @@ std::string readShortString(int fd)
 {
 	int ReadCount = -1;
 	uint32_t len;
-	ReadCount = readBytes(fd, &len, 32/8);
-	if (ReadCount != 32/8)
+	ReadCount = readBytes(fd, ((char *)&len), sizeof(uint32_t));
+	if (ReadCount != sizeof(uint32_t))
 	{
 		return std::string("");
 	}
-	len = ntohl(*(uint32_t *)data);
+	len = ntohl(len);
 	len = len & TRANSFER_SIZE_MASK;
 	if (len < 1)
 	{
 		return std::string("");
 	}
-	data = new char[len];
+	char * data = new char[len];
 	if (!data)
 	{
 		return std::string("");
 	}
 	ReadCount = readBytes(fd, data, len);
-	if (ReadCount != len)
+	if (!signEQunsign(ReadCount, len))
 	{
 		return std::string("");
 	}
@@ -227,12 +236,13 @@ std::string readShortString(int fd)
 	return returnVal;
 }
 
-int writeData(fd, char * buf, int bytes)
+int writeData(int fd, const char * buf, int bytes)
 {
 	int writtenThisTime = 0;
+	int writtenTotal = 0;
 	while (writtenTotal < bytes)
 	{
-		writtenThisTime = write(fd, ((char *)&action)+writtenTotal, bytes-writtenTotal);
+		writtenThisTime = write(fd, buf+writtenTotal, bytes-writtenTotal);
 		if (writtenThisTime <= 0)
 		{
 			return -1;
@@ -244,15 +254,14 @@ int writeData(fd, char * buf, int bytes)
 
 int writeString(int fd, const std::string & str, uint32_t action)
 {
-	int returnVal = 0;
 	uint32_t len = str.length();
 	len = htonl(len);
 	action = action | len;
-	if (32/8 != writeData(fd, action, 32/8))
+	if (sizeof(uint32_t) != writeData(fd, ((char *)&action), sizeof(uint32_t)))
 	{
 		return -1;
 	}
-	if (len != writeData(fd, str.c_str(), len))
+	if (!signEQunsign(writeData(fd, str.c_str(), len), len))
 	{
 		return -2;
 	}
@@ -275,7 +284,7 @@ int main(int argc, char ** argv)
 			return -1;
 		}
 		uint32_t response;
-		if (sizeof(uint32_t) != readBytes(connection, &response, sizeof(uint32_t)))
+		if (sizeof(uint32_t) != readBytes(connection, ((char *)&response), sizeof(uint32_t)))
 		{
 			return -2;
 		}
@@ -284,7 +293,7 @@ int main(int argc, char ** argv)
 		{
 			nameAccepted = true;
 		}
-		else if (reponse & ACTION_NAME_TAKEN)
+		else if (response & ACTION_NAME_TAKEN)
 		{
 			nameAccepted = false;
 		}
