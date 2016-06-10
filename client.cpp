@@ -339,7 +339,7 @@ int main(int argc, char ** argv)
 		FD_SET(connection, &readSet);
 		
 		// Need to select whether we read from the console or from the connection to see if we get asked to play or if we ask to play
-		uint32_t request;
+		uint32_t serverRequest;
 		short reqPtr = 0;
 		char otherUser[MAX_NAME_LEN];
 		short otherUserPtr = 0;
@@ -359,11 +359,11 @@ int main(int argc, char ** argv)
 				}
 				else
 				{
-					*(((char *)&request)+reqPtr) = letter;
+					*(((char *)&serverRequest)+reqPtr) = letter;
 					++reqPtr;
 					if (reqPtr == sizeof(uint32_t))
 					{
-						request = ntohl(request);
+						serverRequest = ntohl(serverRequest);
 						continueRead = 2;
 					}
 				}
@@ -405,10 +405,10 @@ int main(int argc, char ** argv)
 		{
 			// We picked a player
 			// Send server request
-			uint32_t request = ACTION_PLAY_PLAYERNAME | (otherUserPtr & TRANSFER_SIZE_MASK);
-			request = htonl(request);
+			uint32_t ourRequest = ACTION_PLAY_PLAYERNAME | (otherUserPtr & TRANSFER_SIZE_MASK);
+			ourRequest = htonl(ourRequest);
 			// write request type, and embed string length
-			if (sizeof(uint32_t) != writeData(connection, (char *)&request, sizeof(uint32_t)))
+			if (sizeof(uint32_t) != writeData(connection, (char *)&ourRequest, sizeof(uint32_t)))
 			{
 				quit = true;
 				break;
@@ -422,7 +422,7 @@ int main(int argc, char ** argv)
 			
 			// Get response back
 			uint32_t response;
-			if (sizeof(uint32_t) != readBytes(connection, (char *)&response, sizeof(uint32_t))
+			if (sizeof(uint32_t) != readBytes(connection, (char *)&response, sizeof(uint32_t)))
 			{
 				quit = true;
 				break;
@@ -434,7 +434,7 @@ int main(int argc, char ** argv)
 				if (response & INVITE_RESPONSE_YES)
 				{
 					// Answer was yes
-					
+					// It's their turn now. We should go to the waiting for their move state after setting up our board.
 				}
 				else
 				{
@@ -451,14 +451,14 @@ int main(int argc, char ** argv)
 		else if (continueRead == 3)
 		{
 			// Another player picked us
-			char * otherPlayerName = new char[request&TRANSFER_SIZE_MASK];
+			char * otherPlayerName = new char[serverRequest&TRANSFER_SIZE_MASK];
 			// Get their name
-			if (!signEQunsign((request&TRANSFER_SIZE_MASK), readBytes(connection, otherPlayerName, request&TRANSFER_SIZE_MASK)))
+			if (!signEQunsign((serverRequest&TRANSFER_SIZE_MASK), readBytes(connection, otherPlayerName, serverRequest&TRANSFER_SIZE_MASK)))
 			{
 				quit = true;
 				break;
 			}
-			std::string otherPlayer(otherPlayerName, request&TRANSFER_SIZE_MASK);
+			std::string otherPlayer(otherPlayerName, serverRequest&TRANSFER_SIZE_MASK);
 			delete [] otherPlayerName;
 			// Ask if the user wants to accept
 			char userAnswer = 'u';
@@ -476,7 +476,7 @@ int main(int argc, char ** argv)
 				if (sizeof(uint32_t) != writeData(connection, (char *)&response, sizeof(uint32_t)))
 				{
 					quit = true;
-					break
+					break;
 				}
 			}
 			else
@@ -487,7 +487,7 @@ int main(int argc, char ** argv)
 				if (sizeof(uint32_t) != writeData(connection, (char *)&response, sizeof(uint32_t)))
 				{
 					quit = true;
-					break
+					break;
 				}
 				// if answer is no, start the loop over
 				break;
@@ -509,6 +509,11 @@ int main(int argc, char ** argv)
 			// Get the results and print them
 		}
 		// Play the rest of the game
+		bool won = false;
+		while (!won && !quit)
+		{
+			// Loop though turns, starting with us
+		}
 	}
 	
 	// Close connection
