@@ -321,6 +321,7 @@ int main(int argc, char ** argv)
 		FD_SET(0, &readSet);
 		FD_SET(connection, &readSet);
 		
+		// Need to select whether we read from the console or from the connection to see if we get asked to play or if we ask to play
 		uint32_t request;
 		short reqPtr = 0;
 		char otherUser[MAX_NAME_LEN];
@@ -375,17 +376,39 @@ int main(int argc, char ** argv)
 			FD_SET(0, &readSet);
 			FD_SET(connection, &readSet);
 		}
-		// Need to select whether we read from the console or from the connection to see if we get asked to play or if we ask to play
+		
+		if (continueRead != 2 && continueRead != 3)
+		{
+			quit = true;
+			break;
+		}
+		
 		if (continueRead == 2)
 		{
 			// We picked a player
+			// Send server request
+			// Get response back
+			// If reject, start this loop over
 		}
 		else if (continueRead == 3)
 		{
 			// Another player picked us
+			// Get their name
+			// Ask if the user wants to accept
+			// Send response
+			//  if answer is no, start the loop over
 		}
+		
 		Game game;
-	
+		// Create the game
+		game.PlaceShips();
+		game.PrintBoard();
+		// Place ships
+		if (continueRead == 3)
+		{
+			// Do our first turn
+		}
+		// Play the rest of the game
 	}
 	
 	// Close connection
