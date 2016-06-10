@@ -639,11 +639,31 @@ int main(int argc, char ** argv)
 		{
 			// Loop though turns, starting with them sending us a turn
 			std::cout << "Other players turn.\n";
+			uint32_t theirMove;
+			if (sizeof(uint32_t) != readBytes(connection, (char *)&theirMove, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
+			decodeMove(theirMove, x, y);
 			
 			// Calculate the results of their move
 			game.CalculateMoveResults(x, y, hit, hitShipSize, sink, win);
 			// Output the results of their move to our player
 			outputMoveResults(false, hit, hitShipSize, sink, win);
+			
+			uint32_t theirMoveResults = encodeMoveResults(x, y, hit, hitShipSize, sink, win);
+			
+			if (sizeof(uint32_t) != writeData(connection, (char *)&theirMoveResults, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
+			if (win) // other player won
+			{
+				break; // go to the lobby
+			}
+			
 			std::cout << "Our turn.\n";
 			getPlayCoord(x, y);
 			// Send our move
