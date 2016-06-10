@@ -7,8 +7,8 @@
 #define ACTION_INVITE_RESPONSE 0x18000000
 #define ACTION_INVITE_REQ 0x1c000000
 
-// Mask for long transfer sizes: uses all extra space left after command bits for size
-#define LONG_TRANSFER_SIZE_MASK ~ACTION_MASK
+// Mask for long transfer sizes: up to 1M
+#define LONG_TRANSFER_SIZE_MASK 0x000003FF
 
 #define WIN_BIT_MASK 1<<20
 #define WIN_YES WIN_BIT_MASK
