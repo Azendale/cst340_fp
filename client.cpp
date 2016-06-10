@@ -431,10 +431,24 @@ int main(int argc, char ** argv)
 			if (userAnswer == 'Y' || userAnswer == 'y')
 			{
 				// respond with an accept
+				uint32_t response = ACTION_INVITE_RESPONSE | INVITE_RESPONSE_YES;
+				response = htonl(response);
+				if (sizeof(uint32_t) != writeData(connection, (char *)&response, sizeof(uint32_t)))
+				{
+					quit = true;
+					break
+				}
 			}
 			else
 			{
 				// Respond with a reject
+				uint32_t response = ACTION_INVITE_RESPONSE | INVITE_RESPONSE_NO;
+				response = htonl(response);
+				if (sizeof(uint32_t) != writeData(connection, (char *)&response, sizeof(uint32_t)))
+				{
+					quit = true;
+					break
+				}
 				// if answer is no, start the loop over
 				break;
 			}
