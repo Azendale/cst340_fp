@@ -506,6 +506,9 @@ int main(int argc, char ** argv)
 			short x, y;
 			getPlayCoord(x, y);
 			// Send our move
+			uint32_t ourMove = ACTION_MOVE;
+			ourMove = ourMove | (MOVE_X_COORD_MASK_UNSHIFTED&(x<<MOVE_X_COORD_SHIFT));
+			ourMove = ourMove | (MOVE_Y_COORD_MASK_UNSHIFTED&(y<<MOVE_Y_COORD_SHIFT));
 			// Get the results and print them
 		}
 		// Play the rest of the game
