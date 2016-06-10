@@ -23,7 +23,7 @@ void Game::PrintBoard() const
 	std::cout << "\033[37m"; // Use white to draw
 	for (int y=0; y < MAP_SIDE_SIZE; ++y)
 	{
-		std::cout << "\033[7m"; // Bold for the playing field
+		std::cout << "\033[1m"; // Bold for the playing field
 		for (int x=0; x < MAP_SIDE_SIZE; ++x)
 		{
 			if (ocean[x][y].first != nullptr)
