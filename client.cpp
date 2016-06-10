@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Game.h"
+#include "netDefines.h"
 
 extern "C"
 {
@@ -120,12 +121,12 @@ int connectToServer(program_options & options)
 			else
 			{
 				close(sockfd);
-				perror("Trouble connecting: ");
+				perror("Trouble connecting");
 			}
 		}
 		else
 		{
-			perror("Trouble getting a socket: ");
+			perror("Trouble getting a socket");
 		}
 	}
 	freeaddrinfo(destInfoResults);
@@ -137,13 +138,163 @@ int connectToServer(program_options & options)
 	return sockfd;
 }
 
+std::string getUsername()
+{
+	std::string returnVal;
+	while (returnVal.length() < 1 || returnVal.length() >= MAX_NAME_LEN)
+	{
+		std::cout << "Please enter the username you would like to use. It must be less than " << MAX_NAME_LEN << " characters long: ";
+		std::cin >> returnVal;
+	}
+	return returnVal;
+}
+
+int readBytes(int fd, char * buff, int toRead)
+{
+	int readSoFar = 0;
+	while (readSoFar < toRead)
+	{
+		int readThisTime = read(fd, buff, toRead-readSoFar);
+		if (readThisTime > 0)
+		{
+			readSoFar += readThisTime;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	return readSoFar;
+}
+
+std::string readLongString(int fd)
+{
+	int ReadCount = -1;
+	uint32_t len;
+	ReadCount = readBytes(fd, &len, 32/8);
+	if (ReadCount != 32/8)
+	{
+		return std::string("");
+	}
+	len = ntohl(*(uint32_t *)data);
+	len = len & LONG_TRANSFER_SIZE_MASK;
+	if (len < 1)
+	{
+		return std::string("");
+	}
+	data = new char[len];
+	if (!data)
+	{
+		return std::string("");
+	}
+	ReadCount = readBytes(fd, data, len);
+	if (ReadCount != len)
+	{
+		return std::string("");
+	}
+	std::string returnVal(data, len);
+	delete [] data;
+	return returnVal;
+}
+
+std::string readShortString(int fd)
+{
+	int ReadCount = -1;
+	uint32_t len;
+	ReadCount = readBytes(fd, &len, 32/8);
+	if (ReadCount != 32/8)
+	{
+		return std::string("");
+	}
+	len = ntohl(*(uint32_t *)data);
+	len = len & TRANSFER_SIZE_MASK;
+	if (len < 1)
+	{
+		return std::string("");
+	}
+	data = new char[len];
+	if (!data)
+	{
+		return std::string("");
+	}
+	ReadCount = readBytes(fd, data, len);
+	if (ReadCount != len)
+	{
+		return std::string("");
+	}
+	std::string returnVal(data, len);
+	delete [] data;
+	return returnVal;
+}
+
+int writeData(fd, char * buf, int bytes)
+{
+	int writtenThisTime = 0;
+	while (writtenTotal < bytes)
+	{
+		writtenThisTime = write(fd, ((char *)&action)+writtenTotal, bytes-writtenTotal);
+		if (writtenThisTime <= 0)
+		{
+			return -1;
+		}
+		writtenTotal += writtenThisTime;
+	}
+	return writtenTotal;
+}
+
+int writeString(int fd, const std::string & str, uint32_t action)
+{
+	int returnVal = 0;
+	uint32_t len = str.length();
+	len = htonl(len);
+	action = action | len;
+	if (32/8 != writeData(fd, action, 32/8))
+	{
+		return -1;
+	}
+	if (len != writeData(fd, str.c_str(), len))
+	{
+		return -2;
+	}
+	return str.length() + 4;
+}
+
 int main(int argc, char ** argv)
 {
 	program_options options;
 	Init_program_options(&options);
 	parseOptions(argc, argv, options);
 	int connection = connectToServer(options);
-	std::string username;
+	std::string username = getUsername();
+	
+	bool nameAccepted = false;
+	while (!nameAccepted)
+	{
+		if (0 > writeString(connection, username, ACTION_NAME_REQUEST))
+		{
+			return -1;
+		}
+		uint32_t response;
+		if (sizeof(uint32_t) != readBytes(connection, &response, sizeof(uint32_t)))
+		{
+			return -2;
+		}
+		response = ntohl(response);
+		if (response & ACTION_NAME_IS_YOURS)
+		{
+			nameAccepted = true;
+		}
+		else if (reponse & ACTION_NAME_TAKEN)
+		{
+			nameAccepted = false;
+		}
+		else
+		{
+			// Unexpected response
+			return -3;
+		}
+	}
+	
 	
 	Game game;
 	
