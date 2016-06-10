@@ -405,8 +405,48 @@ int main(int argc, char ** argv)
 		{
 			// We picked a player
 			// Send server request
+			uint32_t request = ACTION_PLAY_PLAYERNAME | (otherUserPtr & TRANSFER_SIZE_MASK);
+			request = htonl(request);
+			// write request type, and embed string length
+			if (sizeof(uint32_t) != writeData(connection, (char *)&request, sizeof(uint32_t)))
+			{
+				quit = true;
+				break;
+			}
+			// Write name string
+			if (otherUserPtr != writeData(connection, otherUser, otherUserPtr))
+			{
+				quit = true;
+				break;
+			}
+			
 			// Get response back
+			uint32_t response;
+			if (sizeof(uint32_t) != readBytes(connection, (char *)&response, sizeof(uint32_t))
+			{
+				quit = true;
+				break;
+			}
+			response = ntohl(response);
 			// If reject, start this loop over
+			if (response & ACTION_INVITE_RESPONSE)
+			{
+				if (response & INVITE_RESPONSE_YES)
+				{
+					// Answer was yes
+					
+				}
+				else
+				{
+					// Answer was no
+					continue; // Go back to the lobby and try again
+				}
+			}
+			else
+			{
+				quit = true;
+				break;
+			}
 		}
 		else if (continueRead == 3)
 		{
