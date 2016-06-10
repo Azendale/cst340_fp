@@ -129,6 +129,11 @@ int connectToServer(program_options & options)
 		}
 	}
 	freeaddrinfo(destInfoResults);
+	
+	if (!connectSuccess)
+	{
+		exit(16);
+	}
 	return sockfd;
 }
 
@@ -138,6 +143,7 @@ int main(int argc, char ** argv)
 	Init_program_options(&options);
 	parseOptions(argc, argv, options);
 	int connection = connectToServer(options);
+	std::string username;
 	
 	Game game;
 	
