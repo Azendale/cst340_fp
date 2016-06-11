@@ -170,7 +170,7 @@ int acceptConnection(int sockfd, fd_set & readSet)
 	return 0;
 }
 
-int removeFd(std::vector<FdState> container, int fd)
+int removeFd(std::vector<FdState> & container, int fd)
 {
 	int returnVal = 1;
 	for (std::vector<FdState>::iterator it = container.begin(); it!=container.end(); ++it)
@@ -179,6 +179,7 @@ int removeFd(std::vector<FdState> container, int fd)
 		{
 			container.erase(it);
 			returnVal = 0;
+			break;
 		}
 	}
 	return returnVal;
