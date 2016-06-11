@@ -467,15 +467,14 @@ int main(int argc, char ** argv)
 			if (FD_ISSET(connection, &readSet))
 			{
 				// connection ready
-				char letter;
-				if (1 != read(0, &letter, 1))
+				int readThisTime = read(connection, ((char *)&serverRequest)+reqPtr, sizeof(uint32_t)-reqPtr);
+				if (readThisTime <= 0)
 				{
 					continueRead = -3;
 				}
 				else
 				{
-					*(((char *)&serverRequest)+reqPtr) = letter;
-					++reqPtr;
+					reqPtr += readThisTime;
 					if (reqPtr == sizeof(uint32_t))
 					{
 						serverRequest = ntohl(serverRequest);
@@ -486,23 +485,15 @@ int main(int argc, char ** argv)
 			else if (FD_ISSET(0, &readSet))
 			{
 				// Stdin ready
-				char letter;
-				if (1 != read(0, &letter, 1))
+				int readThisTime = read(0, otherUser+otherUserPtr, MAX_NAME_LEN-otherUserPtr)
+				if (readThisTime <= 0)
 				{
 					continueRead = -1;
 				}
-				if ('\n' == letter)
-				{
-					continueRead = 2;
-				}
 				else
 				{
-					otherUser[otherUserPtr] = letter;
-					++otherUserPtr;
-					if (otherUserPtr == MAX_NAME_LEN)
-					{
-						continueRead = -2;
-					}
+					otherUserPtr += readThisTime;
+					continueRead = 2;
 				}
 			}
 			FD_ZERO(&readSet);
