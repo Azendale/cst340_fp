@@ -275,7 +275,7 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	char * nameResult = state.GetRead(readLen);
 	if (readLen > 0 && readLen < MAX_NAME_LEN)
 	{
-		std::string reqName = std::string(nameResult);
+		std::string reqName = std::string(nameResult, readLen);
 		uint32_t response = 0;
 		if (findByName(reqName))
 		{
