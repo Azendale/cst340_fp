@@ -294,7 +294,7 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		state.SetWrite((char *)(&response), 32/8);
 		// Not reading again until the write finishes
 		FD_CLR(state.GetFD(), &readSet);
-		FD_SET(state.GetFD(), &writeSet);
+		fdAddSet(state.GetFD(), &writeSet);
 	}
 	else
 	{
@@ -308,7 +308,7 @@ void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to read
 	FD_CLR(state.GetFD(), &writeSet);
-	FD_SET(state.GetFD(), &readSet);
+	fdAddSet(state.GetFD(), &readSet);
 	// State: anon
 	state.SetState(FD_STATE_ANON);
 	// Read size:
@@ -320,7 +320,7 @@ void nameAcceptAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to read to listen for name listing command
 	FD_CLR(state.GetFD(), &writeSet);
-	FD_SET(state.GetFD(), &readSet);
+	fdAddSet(state.GetFD(), &readSet);
 	// State: lobby
 	state.SetState(FD_STATE_LOBBY);
 	// Read size:
@@ -344,7 +344,7 @@ void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSe
 	// Either way, the size to read happens to be the same
 	state.SetRead(sizeof(uint32_t));
 	FD_CLR(state.GetFD(), &writeSet);
-	FD_SET(state.GetFD(), &readSet);
+	fdAddSet(state.GetFD(), &readSet);
 }
 
 std::string GenerateNetNameList()
@@ -384,7 +384,7 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		std::string list = GenerateNetNameList();
 		state.SetWrite(list.c_str(), (short)(list.length()));
 		// Switch to write
-		FD_SET(state.GetFD(), &writeSet);
+		fdAddSet(state.GetFD(), &writeSet);
 		FD_CLR(state.GetFD(), &readSet);
 		state.SetState(FD_STATE_REQ_NAME_LIST);
 	}
@@ -431,7 +431,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		response = response | INVITE_RESPONSE_NO;
 		state.SetState(FD_STATE_GAME_REQ_REJECT);
 		// Switch to write
-		FD_SET(state.GetFD(), &writeSet);
+		fdAddSet(state.GetFD(), &writeSet);
 		FD_CLR(state.GetFD(), &readSet);
 		response = htonl(response);
 		state.SetWrite((char *)&response, 32/8);
@@ -440,7 +440,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	{
 		// Ask other player if they want to play
 		// Switch to write with other player
-		FD_SET(otherFd->GetFD(), &writeSet);
+		fdAddSet(otherFd->GetFD(), &writeSet);
 		FD_CLR(otherFd->GetFD(), &readSet);
 		otherFd->SetState(FD_STATE_GAME_INVITE);
 		uint32_t invitation = ACTION_INVITE_REQ;
@@ -478,7 +478,7 @@ void writeGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to reading now
 	FD_CLR(state.GetFD(), &writeSet);
-	FD_SET(state.GetFD(), &readSet);
+	fdAddSet(state.GetFD(), &readSet);
 	// Switch to the state that means we are waiting for a response
 	state.SetState(FD_STATE_GAME_INVITE_RESP_WAIT);
 }
@@ -521,7 +521,7 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		inviterResponse = inviterResponse | INVITE_RESPONSE_YES;
 		inviterResponse = htonl(inviterResponse);
 		inviter->SetWrite(((char *)&inviterResponse), 32/8);
-		FD_SET(inviter->GetFD(), &writeSet);
+		fdAddSet(inviter->GetFD(), &writeSet);
 		
 		// This connection goes into FD_STATE_GAME_THISFD_MOVE
 		state.SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
@@ -546,7 +546,7 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		inviterResponse = inviterResponse | INVITE_RESPONSE_NO;
 		inviterResponse = htonl(inviterResponse);
 		inviter->SetWrite(((char *)&inviterResponse), 32/8);
-		FD_SET(inviter->GetFD(), &writeSet);
+		fdAddSet(inviter->GetFD(), &writeSet);
 	}
 }
 
@@ -556,7 +556,7 @@ void afterWriteReject(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// Switch to reading
 	FD_CLR(state.GetFD(), &writeSet);
 	// Set up for a read from the lobby
-	FD_SET(state.GetFD(), &readSet);
+	fdAddSet(state.GetFD(), &readSet);
 	state.SetRead(32/8);
 	state.SetState(FD_STATE_LOBBY);
 }
@@ -595,7 +595,7 @@ void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.GetOtherPlayer()->SetWrite(readData, readSize);
 	
 	// Put other FD in write mode
-	FD_SET(state.GetOtherPlayer()->GetFD(), &writeSet);
+	fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
 	// Other FD should already be in the state FD_STATE_GAME_OFD_MOVE
 }
 
@@ -619,7 +619,7 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 		// Set pair connection to state FD_STATE_GAME_THISFD_MOVE
 		state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
 		// Put the other connection in the read list
-		FD_SET(state.GetOtherPlayer()->GetFD(), &readSet);
+		fdAddSet(state.GetOtherPlayer()->GetFD(), &readSet);
 		state.GetOtherPlayer()->SetRead(32/8);
 	}
 }
@@ -628,7 +628,7 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 void oFdMoveWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Put this connection in read list and make sure it's not in the write list anymore
-	FD_SET(state.GetFD(), &readSet);
+	fdAddSet(state.GetFD(), &readSet);
 	FD_CLR(state.GetFD(), &writeSet);
 	// set this connection's state to FD_STATE_GAME_OFD_MOVE_RESULTS
 	state.SetRead(32/8);
@@ -663,7 +663,7 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		// Set other connection to state FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS
 		state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS);
 		// Put other connection in write list and set it up with the results we just read
-		FD_SET(state.GetOtherPlayer()->GetFD(), &writeSet);
+		fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
 		state.GetOtherPlayer()->SetWrite(readData, readLen);
 		
 		// Remove this connection from the read list
