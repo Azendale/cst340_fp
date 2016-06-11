@@ -174,5 +174,7 @@ void Game::CalculateMoveResults(short x, short y, bool & hit, short & shipSize, 
 		shipSize = 0;
 		sink = false;
 		win = false;
+		// Except ocean
+		ocean[x][y].second = true;
 	}
 }
