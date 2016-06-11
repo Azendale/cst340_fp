@@ -466,7 +466,7 @@ FdState * findFdByPastInvitation(FdState * invitee)
 	FdState * returnVal = nullptr;
 	for (auto& state: Fds)
 	{
-		if (state.GetState() == FD_STATE_GAME_INVITE_RESP_WAIT && state.GetOtherPlayer() == invitee)
+		if (state.GetState() == FD_STATE_REQD_GAME && state.GetOtherPlayer() == invitee)
 		{
 			returnVal = &state;
 		}
