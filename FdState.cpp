@@ -1,4 +1,5 @@
 #include "FdState.h"
+#include <cstring>
 extern "C"
 {
 	#include <unistd.h>
@@ -7,6 +8,59 @@ extern "C"
 FdState::FdState(int Fd, short State): fd(Fd), state(State), name(""), otherPlayer(nullptr), readPtr(-1), writePtr(-1), readSize(0), writeSize(0), readBuf(nullptr), writeBuf(nullptr), readInProgress(false), writeInProgress(false), lastMoveWin(false)
 {
 	
+}
+
+FdState::FdState(const FdState & s): fd(s.fd), state(s.state), name(s.name), otherPlayer(s.otherPlayer), readPtr(s.readPtr), writePtr(s.writePtr), readSize(s.readSize), writeSize(s.writeSize), readBuf(nullptr), writeBuf(nullptr), readInProgress(s.readInProgress), writeInProgress(s.writeInProgress), lastMoveWin(s.lastMoveWin)
+{
+	// deep copy these two
+	//char * readBuf;
+	//char * writeBuf;
+	if (s.readBuf)
+	{
+		this->readBuf = new char[this->readSize];
+		memmove(this->readBuf, s.readBuf, this->readSize);
+	}
+	if (s.writeBuf)
+	{
+		this->writeBuf = new char[this->writeSize];
+		memmove(this->writeBuf, s.writeBuf, this->writeSize);
+	}
+}
+
+const FdState & FdState::operator=(const FdState & rhs)
+{
+	this->fd = rhs.fd;
+	this->state = rhs.state;
+	this->name = rhs.name;
+	this->otherPlayer = rhs.otherPlayer;
+	this->readPtr = rhs.readPtr;
+	this->writePtr = rhs.writePtr;
+	this->readSize = rhs.readSize;
+	this->writeSize = rhs.writeSize;
+	this->readInProgress = rhs.readInProgress;
+	this->writeInProgress = rhs.writeInProgress;
+	this->lastMoveWin = rhs.lastMoveWin;
+	if (this->readBuf)
+	{
+		delete [] this->readBuf;
+		this->readBuf = nullptr;
+	}
+	if (this->writeBuf)
+	{
+		delete [] this->writeBuf;
+		this->writeBuf = nullptr;
+	}
+	if (rhs.readBuf)
+	{
+		this->readBuf = new char[this->readSize];
+		memmove(this->readBuf, rhs.readBuf, this->readSize);
+	}
+	if (rhs.writeBuf)
+	{
+		this->writeBuf = new char[this->writeSize];
+		memmove(this->writeBuf, rhs.writeBuf, this->writeSize);
+	}
+	return *this;
 }
 
 FdState::~FdState()

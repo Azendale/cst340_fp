@@ -44,6 +44,8 @@ class FdState
 public:
 	FdState(int fd, short state);
 	~FdState();
+	const FdState & operator=(const FdState & rhs);
+	FdState(const FdState & s);
 	int GetFD() const;
 	short GetState() const;
 	void SetState(short state);
