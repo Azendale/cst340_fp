@@ -291,6 +291,7 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 			response = ACTION_NAME_IS_YOURS;
 			state.SetState(FD_STATE_NAME_ACCEPT);
 		}
+		response = htonl(response);
 		state.SetWrite((char *)(&response), sizeof(uint32_t));
 		// Not reading again until the write finishes
 		FD_CLR(state.GetFD(), &readSet);
