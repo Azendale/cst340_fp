@@ -511,6 +511,11 @@ int main(int argc, char ** argv)
 		{
 			// We picked a player
 			// Send server request
+			// Strip newline if nessesary
+			if ('\n' == otherUser[otherUserPtr])
+			{
+				--otherUserPtr;
+			}
 			uint32_t ourRequest = ACTION_PLAY_PLAYERNAME | (otherUserPtr & TRANSFER_SIZE_MASK);
 			ourRequest = htonl(ourRequest);
 			// write request type, and embed string length
