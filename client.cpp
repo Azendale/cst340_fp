@@ -512,7 +512,7 @@ int main(int argc, char ** argv)
 			// We picked a player
 			// Send server request
 			// Strip newline if nessesary
-			if ('\n' == otherUser[otherUserPtr])
+			if ('\n' == otherUser[otherUserPtr-1])
 			{
 				--otherUserPtr;
 			}
