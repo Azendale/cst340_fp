@@ -255,7 +255,8 @@ int writeData(int fd, const char * buf, int bytes)
 int writeString(int fd, const std::string & str, uint32_t action)
 {
 	uint32_t len = str.length();
-	action = action | htonl(len);
+	action = action | len;
+	action = htonl(action);
 	if (sizeof(uint32_t) != writeData(fd, ((char *)&action), sizeof(uint32_t)))
 	{
 		return -1;
