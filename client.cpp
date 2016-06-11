@@ -485,7 +485,7 @@ int main(int argc, char ** argv)
 			else if (FD_ISSET(0, &readSet))
 			{
 				// Stdin ready
-				int readThisTime = read(0, otherUser+otherUserPtr, MAX_NAME_LEN-otherUserPtr)
+				int readThisTime = read(0, otherUser+otherUserPtr, MAX_NAME_LEN-otherUserPtr);
 				if (readThisTime <= 0)
 				{
 					continueRead = -1;
