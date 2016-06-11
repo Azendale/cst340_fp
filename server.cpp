@@ -720,7 +720,15 @@ int main(int argc, char ** argv)
 			short state = it.GetState();
 			if (FD_ISSET(thisFD, &readSetSelectResults))
 			{
-				int readResult = it.Read();
+				if (thisFD != sockfd)
+				{
+					int readResult = it.Read();
+				}
+				else
+				{
+					// Treat the accept FD as a special case and act like it's ready without trying to read it
+					readResult = 1;
+				}
 				if (readResult == 0)
 				{
 					// Need to read again, do nothing
