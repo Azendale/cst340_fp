@@ -143,7 +143,7 @@ void Game::CalculateMoveResults(short x, short y, bool & hit, short & shipSize, 
 	if (ocean[x][y].first != nullptr && !(ocean[x][y].second))
 	{
 		// A new hit
-		hit = true;
+		ocean[x][y].second = hit = true;
 		shipSize = ocean[x][y].first->GetSize();
 		// Did they sink a boat?
 		ocean[x][y].first->Hit(x, y);
@@ -161,6 +161,10 @@ void Game::CalculateMoveResults(short x, short y, bool & hit, short & shipSize, 
 				}
 			}
 			win = allHit;
+		}
+		else
+		{
+			sink = false;
 		}
 	}
 	else
