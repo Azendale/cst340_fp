@@ -720,9 +720,10 @@ int main(int argc, char ** argv)
 			short state = it.GetState();
 			if (FD_ISSET(thisFD, &readSetSelectResults))
 			{
+				int readResult;
 				if (thisFD != sockfd)
 				{
-					int readResult = it.Read();
+					readResult = it.Read();
 				}
 				else
 				{
