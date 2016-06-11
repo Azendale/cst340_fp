@@ -179,7 +179,6 @@ int removeFd(std::vector<FdState> container, int fd)
 		{
 			container.erase(it);
 			returnVal = 0;
-			break;
 		}
 	}
 	return returnVal;
