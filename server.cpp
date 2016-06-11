@@ -672,6 +672,17 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
+// Called after writing the lobby name list to the connection (called after write finishes in FD_STATE_REQ_NAME_LIST state)
+void afterNameListWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
+{
+	// Take ourself out of the write list
+	FD_CLR(state.GetFD(), &writeSet);
+	// Set up for a lobby read
+	fdAddSet(state.GetFD(), &readSet);
+	state.SetState(FD_STATE_LOBBY);
+	state.SetRead(sizeof(uint32_t));
+}
+
 int main(int argc, char ** argv)
 {
 	int sockfd = -1;
@@ -859,6 +870,10 @@ int main(int argc, char ** argv)
 					else if (FD_STATE_GAME_REQ_REJECT == state)
 					{
 						afterWriteReject(it, readSet, writeSet);
+					}
+					else if (FD_STATE_REQ_NAME_LIST == state)
+					{
+						afterNameListWrite(it, readSet, writeSet);
 					}
 				}
 			}
