@@ -550,6 +550,7 @@ int main(int argc, char ** argv)
 				else
 				{
 					// Answer was no
+					std::cout << "Other player declined you invitation.\n";
 					continue; // Go back to the lobby and try again
 				}
 			}
@@ -601,7 +602,7 @@ int main(int argc, char ** argv)
 					break;
 				}
 				// if answer is no, start the loop over
-				break;
+				continue;
 			}
 		}
 		
