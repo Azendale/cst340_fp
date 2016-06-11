@@ -24,6 +24,7 @@ extern "C"
 #include "netDefines.h"
 
 static std::vector<FdState> Fds;
+static int maxFd = 3;
 
 std::string getPortString(int argc, char ** argv)
 {
@@ -44,16 +45,16 @@ std::string getPortString(int argc, char ** argv)
 	return std::string(portString);
 }
 
-void fdAddSet(fd_set& set, int newFd, int & maxFd)
+void fdAddSet(int newFd, fd_set * set)
 {
 	if (newFd > maxFd)
 	{
 		maxFd = newFd;
 	}
-	FD_SET(newFd, &set);
+	FD_SET(newFd, set);
 }
 
-int SetUpListing(std::string portString, int & maxFd, fd_set & readList, int & sockfd)
+int SetUpListing(std::string portString, fd_set & readList, int & sockfd)
 {
 	// Gives getaddrinfo hints about the critera for the addresses it returns
 	struct addrinfo hints;
@@ -133,7 +134,7 @@ int SetUpListing(std::string portString, int & maxFd, fd_set & readList, int & s
 	
 	// Add new FD to list with correct state
 	Fds.push_back(FdState(sockfd, FD_STATE_ACCEPT_SOCK));
-	fdAddSet(readList, sockfd, maxFd);
+	fdAddSet(sockfd, &readList);
 	
 	return 0;
 }
@@ -164,7 +165,7 @@ int acceptConnection(int sockfd, fd_set & readSet)
 		FdState newConnection(acceptfd, FD_STATE_ANON);
 		Fds.push_back(newConnection);
 		newConnection.SetRead(sizeof(uint32_t));
-		FD_SET(newConnection.GetFD(), &readSet);
+		fdAddSet(newConnection.GetFD(), &readSet);
 	}
 	return 0;
 }
@@ -672,7 +673,6 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 
 int main(int argc, char ** argv)
 {
-	int maxFd = 1;
 	int sockfd = -1;
 	std::string port = getPortString(argc, argv);
 	
@@ -702,7 +702,7 @@ int main(int argc, char ** argv)
 	fd_set writeSet;
 	FD_ZERO(&writeSet);
 	
-	if (SetUpListing(port, maxFd, readSet, sockfd))
+	if (SetUpListing(port, readSet, sockfd))
 	{
 		return -1;
 	}
