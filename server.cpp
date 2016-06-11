@@ -379,7 +379,7 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	
 	uint32_t request = *((uint32_t *)readData);
 	request = ntohl(request);
-	if ((ACTION_REQ_PLAYERS_LIST & ACTION_MASK) == request)
+	if (ACTION_REQ_PLAYERS_LIST == (request & ACTION_MASK))
 	{
 		std::string list = GenerateNetNameList();
 		state.SetWrite(list.c_str(), (short)(list.length()));
@@ -388,7 +388,7 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		FD_CLR(state.GetFD(), &readSet);
 		state.SetState(FD_STATE_REQ_NAME_LIST);
 	}
-	else if ((ACTION_PLAY_PLAYERNAME & ACTION_MASK) == request)
+	else if (ACTION_PLAY_PLAYERNAME == (request & ACTION_MASK))
 	{
 		uint32_t nameLen = request & TRANSFER_SIZE_MASK;
 		if (nameLen < MAX_NAME_LEN)
