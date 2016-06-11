@@ -134,6 +134,7 @@ void Game::PlaceShips()
 				ocean[newx][j].first = &(fleet[i-1]);
 			}
 		}
+		this->PrintBoard();
 	}
 }
 

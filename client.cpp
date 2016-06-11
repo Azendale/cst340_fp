@@ -662,9 +662,10 @@ int main(int argc, char ** argv)
 			decodeMove(theirMove, x, y);
 			
 			// Calculate the results of their move
-			game.CalculateMoveResults(x, y, hit, hitShipSize, sink, win);
+			game.CalculateMoveResults(x-1, y-1, hit, hitShipSize, sink, win);
 			// Output the results of their move to our player
 			outputMoveResults(false, hit, hitShipSize, sink, win);
+			game.PrintBoard();
 			
 			uint32_t theirMoveResults = encodeMoveResults(x, y, hit, hitShipSize, sink, win);
 			
