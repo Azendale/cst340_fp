@@ -291,7 +291,7 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 			response = ACTION_NAME_IS_YOURS;
 			state.SetState(FD_STATE_NAME_ACCEPT);
 		}
-		state.SetWrite((char *)(&response), 32/8);
+		state.SetWrite((char *)(&response), sizeof(uint32_t));
 		// Not reading again until the write finishes
 		FD_CLR(state.GetFD(), &readSet);
 		fdAddSet(state.GetFD(), &writeSet);
@@ -312,7 +312,7 @@ void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// State: anon
 	state.SetState(FD_STATE_ANON);
 	// Read size:
-	state.SetRead(32/8);
+	state.SetRead(sizeof(uint32_t));
 }
 
 // In state FD_STATE_NAME_ACCEPT after successfully writing response. Switches to listing in lobby mode
@@ -324,7 +324,7 @@ void nameAcceptAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// State: lobby
 	state.SetState(FD_STATE_LOBBY);
 	// Read size:
-	state.SetRead(32/8);
+	state.SetRead(sizeof(uint32_t));
 }
 
 // Called after finishing write in FD_STATE_NAME_ACCEPT or FD_STATE_NAME_REJECT state
@@ -358,7 +358,7 @@ std::string GenerateNetNameList()
 	}
 	len = htonl(len);
 	// Pack bytes of length into first 4 chars of string
-	std::string returnString(((char *)&len), 32/8);
+	std::string returnString(((char *)&len), sizeof(uint32_t));
 	returnString += nameList;
 	return returnString;
 }
@@ -370,7 +370,7 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// FD can request player list
 	short readSize;
 	char * readData = state.GetRead(readSize);
-	if (32/8 != readSize)
+	if (sizeof(uint32_t) != readSize)
 	{
 		// Read command that was too large
 		abortConnection(state, readSet, writeSet);
@@ -434,7 +434,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		fdAddSet(state.GetFD(), &writeSet);
 		FD_CLR(state.GetFD(), &readSet);
 		response = htonl(response);
-		state.SetWrite((char *)&response, 32/8);
+		state.SetWrite((char *)&response, sizeof(uint32_t));
 	}
 	else
 	{
@@ -447,7 +447,7 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		uint32_t ourNameLen = state.GetName().length();
 		invitation = invitation | ourNameLen;
 		invitation = htonl(invitation);
-		std::string inviteandname((char *)&invitation, 32/8);
+		std::string inviteandname((char *)&invitation, sizeof(uint32_t));
 		inviteandname += state.GetName();
 		otherFd->SetWrite(inviteandname.c_str(), (short)inviteandname.length());
 		
@@ -489,7 +489,7 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// Need to find out if they said yes or no
 	short readSize;
 	char * readData = state.GetRead(readSize);
-	if (readSize != 32/8)
+	if (readSize != sizeof(uint32_t))
 	{
 		// Response read was not the right size
 		abortConnection(state, readSet, writeSet);
@@ -520,12 +520,12 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		uint32_t inviterResponse = ACTION_INVITE_RESPONSE;
 		inviterResponse = inviterResponse | INVITE_RESPONSE_YES;
 		inviterResponse = htonl(inviterResponse);
-		inviter->SetWrite(((char *)&inviterResponse), 32/8);
+		inviter->SetWrite(((char *)&inviterResponse), sizeof(uint32_t));
 		fdAddSet(inviter->GetFD(), &writeSet);
 		
 		// This connection goes into FD_STATE_GAME_THISFD_MOVE
 		state.SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
-		state.SetRead(32/8);
+		state.SetRead(sizeof(uint32_t));
 		// The other connection already has our address, but we need to set the reverse
 		state.SetOtherPlayer(inviter);
 		// This connection should already be in the read list
@@ -535,7 +535,7 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		// Answered no
 		// this connection goes into FD_STATE_LOBBY, and tries to read again
 		state.SetState(FD_STATE_LOBBY);
-		state.SetRead(32/8);
+		state.SetRead(sizeof(uint32_t));
 		// (This connection should already be in the read list)
 		
 		// Other fd parter variable cleared
@@ -545,7 +545,7 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 		uint32_t inviterResponse = ACTION_INVITE_RESPONSE;
 		inviterResponse = inviterResponse | INVITE_RESPONSE_NO;
 		inviterResponse = htonl(inviterResponse);
-		inviter->SetWrite(((char *)&inviterResponse), 32/8);
+		inviter->SetWrite(((char *)&inviterResponse), sizeof(uint32_t));
 		fdAddSet(inviter->GetFD(), &writeSet);
 	}
 }
@@ -557,7 +557,7 @@ void afterWriteReject(FdState & state, fd_set & readSet, fd_set & writeSet)
 	FD_CLR(state.GetFD(), &writeSet);
 	// Set up for a read from the lobby
 	fdAddSet(state.GetFD(), &readSet);
-	state.SetRead(32/8);
+	state.SetRead(sizeof(uint32_t));
 	state.SetState(FD_STATE_LOBBY);
 }
 
@@ -583,7 +583,7 @@ void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	// Get the move
 	short readSize;
 	char * readData = state.GetRead(readSize);
-	if (readSize != 32/8)
+	if (readSize != sizeof(uint32_t))
 	{
 		
 		abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
@@ -606,7 +606,7 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 	if (state.GetLastMoveWin())
 	{
 		state.SetState(FD_STATE_LOBBY);
-		state.SetRead(32/8);
+		state.SetRead(sizeof(uint32_t));
 	}
 	else
 	// Otherwise:
@@ -620,7 +620,7 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 		state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
 		// Put the other connection in the read list
 		fdAddSet(state.GetOtherPlayer()->GetFD(), &readSet);
-		state.GetOtherPlayer()->SetRead(32/8);
+		state.GetOtherPlayer()->SetRead(sizeof(uint32_t));
 	}
 }
 
@@ -631,7 +631,7 @@ void oFdMoveWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	fdAddSet(state.GetFD(), &readSet);
 	FD_CLR(state.GetFD(), &writeSet);
 	// set this connection's state to FD_STATE_GAME_OFD_MOVE_RESULTS
-	state.SetRead(32/8);
+	state.SetRead(sizeof(uint32_t));
 	state.SetState(FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS);
 }
 
@@ -641,7 +641,7 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	short readLen;
 	uint32_t result;
 	char * readData = state.GetRead(readLen);
-	if (readLen != 32/8)
+	if (readLen != sizeof(uint32_t))
 	{
 		abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
 		abortConnection(state, readSet, writeSet);
@@ -656,7 +656,7 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		state.GetOtherPlayer()->SetLastMoveWin();
 		state.GetOtherPlayer()->SetOtherPlayer(nullptr);
 		state.SetOtherPlayer(nullptr);
-		state.SetRead(32/8);
+		state.SetRead(sizeof(uint32_t));
 	}
 	else
 	{
