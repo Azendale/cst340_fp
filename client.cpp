@@ -462,7 +462,7 @@ int main(int argc, char ** argv)
 		
 		int continueRead = 1;
 		
-		while (select(10, &readSet, NULL, NULL, NULL) >= 0 && 1 == continueRead)
+		while (1 == continueRead && select(10, &readSet, NULL, NULL, NULL) >= 0)
 		{
 			if (FD_ISSET(connection, &readSet))
 			{
