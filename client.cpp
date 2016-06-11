@@ -478,7 +478,7 @@ int main(int argc, char ** argv)
 					if (reqPtr == sizeof(uint32_t))
 					{
 						serverRequest = ntohl(serverRequest);
-						continueRead = 2;
+						continueRead = 3;
 					}
 				}
 			}
