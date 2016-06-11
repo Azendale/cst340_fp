@@ -163,8 +163,8 @@ int acceptConnection(int sockfd, fd_set & readSet)
 	else
 	{
 		FdState newConnection(acceptfd, FD_STATE_ANON);
-		Fds.push_back(newConnection);
 		newConnection.SetRead(sizeof(uint32_t));
+		Fds.push_back(newConnection);
 		fdAddSet(newConnection.GetFD(), &readSet);
 	}
 	return 0;
