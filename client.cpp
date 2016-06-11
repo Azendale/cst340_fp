@@ -439,6 +439,7 @@ int main(int argc, char ** argv)
 	{
 		// Need to get list of other players
 		uint32_t listReq = ACTION_REQ_PLAYERS_LIST;
+		listReq = htonl(listReq);
 		if (sizeof(uint32_t) != writeData(connection, (char *)&listReq, sizeof(uint32_t)))
 		{
 			quit = true;
