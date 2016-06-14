@@ -9,6 +9,7 @@ Game::Game()
 		for (int y=0; y < MAP_SIDE_SIZE; ++y)
 		{
 			ocean[x][y] = std::pair<Ship *, bool>(nullptr, false);
+			targetmap[x][y] = std::pair<bool, bool>(false, false);
 		}
 	}
 	
@@ -18,8 +19,55 @@ Game::Game()
 	}
 }
 
+void Game::SetPlayHitCoord(short x, short y)
+{
+	targetmap[x][y].second = true;
+}
+
+void Game::SetPlayCoord(short x, short y)
+{
+	targetmap[x][y].first = true;
+}
+
 void Game::PrintBoard() const
 {
+	std::cout << "Target Map:\n";
+	for (int x=1; x <= MAP_SIDE_SIZE; ++x)
+	{
+		std::cout << x << " ";
+	}
+	std::cout << "\n\033[37m"; // Use white to draw
+	for (int y=0; y < MAP_SIDE_SIZE; ++y)
+	{
+		std::cout << "\033[1;37m"; // Bold for the playing field
+		for (int x=0; x < MAP_SIDE_SIZE; ++x)
+		{
+			if (targetmap[x][y].first)
+			{
+				// Ship there
+				if (targetmap[x][y].second)
+				{
+					std::cout << "\033[31m"; // red for hits
+					// This square fired at
+					std::cout << "<>";
+					std::cout << "\033[37m"; // Reset color after hit -- back to white
+				}
+				else
+				{
+					// This square not fired at
+					std::cout << "<>";
+				}
+			}
+			else
+			{
+				// This square not fired at
+				std::cout << "  ";
+			}
+		}
+		std::cout << "\033[0m  - " << y+1 << "\n"; // Unbold and then put numbers
+	}
+	std::cout << "\033[0m"; // Reset everything to defaults	
+	std::cout << "Ocean:\n";
 	for (int x=1; x <= MAP_SIDE_SIZE; ++x)
 	{
 		std::cout << x << " ";

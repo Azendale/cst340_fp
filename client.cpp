@@ -624,6 +624,7 @@ int main(int argc, char ** argv)
 			// Do our first turn
 			std::cout << "Because you were invited to a game, you get the first move. \n";
 			getPlayCoord(x, y);
+			game.SetPlayCoord(x-1, y-1);
 			// Send our move
 			// Encodes move, including net byte order
 			uint32_t ourMove = encodeMove(x, y);
@@ -641,6 +642,10 @@ int main(int argc, char ** argv)
 			}
 			// Decodes from net order
 			decodeMoveResults(moveResults, hit, hitShipSize, sink, win);
+			if (hit)
+			{
+				game.SetPlayHitCoord(x-1, y-1);
+			}
 			outputMoveResults(true, hit, hitShipSize, sink, win);
 			if (win)
 			{
@@ -682,6 +687,7 @@ int main(int argc, char ** argv)
 			
 			std::cout << "Our turn.\n";
 			getPlayCoord(x, y);
+			game.SetPlayCoord(x-1, y-1);
 			// Send our move
 			// Encodes move, including net byte order
 			uint32_t ourMove = encodeMove(x, y);
@@ -699,6 +705,10 @@ int main(int argc, char ** argv)
 			}
 			// Decodes from net order
 			decodeMoveResults(moveResults, hit, hitShipSize, sink, win);
+			if (hit)
+			{
+				game.SetPlayHitCoord(x-1, y-1);
+			}
 			outputMoveResults(true, hit, hitShipSize, sink, win);
 			if (win)
 			{
