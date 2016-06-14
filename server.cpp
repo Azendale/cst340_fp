@@ -192,14 +192,27 @@ int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 	FD_CLR(state.GetFD(), &readSet);
 	// Remove it from the write set
 	FD_CLR(state.GetFD(), &writeSet);
-	// Remove from FD list
-	if (close(state.GetFD()))
+	// Remove any partner pointers to this one
+	for (auto& ostate: Fds)
+	{
+		if (ostate.GetOtherPlayer() == &state)
+		{
+			ostate.SetOtherPlayer(nullptr);
+		}
+	}
+	// Shut the connection
+	if (shutdown(stat.GetFD(), SHUT_RDWR))
 	{
 		returnVal = 1;
 	}
-	if (removeFd(Fds, state.GetFD()))
+	// Remove from FD list
+	if (close(state.GetFD()))
 	{
 		returnVal = 2;
+	}
+	if (removeFd(Fds, state.GetFD()))
+	{
+		returnVal = 3;
 	}
 	return returnVal;
 }
@@ -586,18 +599,27 @@ void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	char * readData = state.GetRead(readSize);
 	if (readSize != sizeof(uint32_t))
 	{
-		
-		abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
+		if (state.GetOtherPlayer())
+		{
+			abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
+		}
 		abortConnection(state, readSet, writeSet);
 		return;
 	}
 	
-	// Set up other FD (whose state should be FD_STATE_GAME_OFD_MOVE) to write move
-	state.GetOtherPlayer()->SetWrite(readData, readSize);
-	
-	// Put other FD in write mode
-	fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
-	// Other FD should already be in the state FD_STATE_GAME_OFD_MOVE
+	if (state.GetOtherPlayer())
+	{
+		// Set up other FD (whose state should be FD_STATE_GAME_OFD_MOVE) to write move
+		state.GetOtherPlayer()->SetWrite(readData, readSize);
+		
+		// Put other FD in write mode
+		fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
+		// Other FD should already be in the state FD_STATE_GAME_OFD_MOVE
+	}
+	else
+	{
+		abortConnection(state, readSet, writeSet);
+	}
 }
 
 // Called after writing results of this connections move to this connection (called after write in state FD_STATE_GAME_THISFD_MOVE_RESULTS)
@@ -617,11 +639,18 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 		// Remove this connection from all lists
 		FD_CLR(state.GetFD(), &readSet);
 		FD_CLR(state.GetFD(), &writeSet);
-		// Set pair connection to state FD_STATE_GAME_THISFD_MOVE
-		state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
-		// Put the other connection in the read list
-		fdAddSet(state.GetOtherPlayer()->GetFD(), &readSet);
-		state.GetOtherPlayer()->SetRead(sizeof(uint32_t));
+		if (state.GetOtherPlayer())
+		{
+			// Set pair connection to state FD_STATE_GAME_THISFD_MOVE
+			state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE);
+			// Put the other connection in the read list
+			fdAddSet(state.GetOtherPlayer()->GetFD(), &readSet);
+			state.GetOtherPlayer()->SetRead(sizeof(uint32_t));
+		}
+		else
+		{
+			abortConnection(state, readSet, writeSet);
+		}
 	}
 }
 
@@ -644,31 +673,41 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	char * readData = state.GetRead(readLen);
 	if (readLen != sizeof(uint32_t))
 	{
-		abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
+		if (state.GetOtherPlayer())
+		{
+			abortConnection(*(state.GetOtherPlayer()), readSet, writeSet);
+		}
 		abortConnection(state, readSet, writeSet);
 		return;
 	}
 	
 	result = ntohl(*((uint32_t *)readData));
 	
-	// Check if that was a winning move. If so, set a flag on the other connection & remove the pair pointers, set this connection up for a lobby read
-	if (result & WIN_YES)
+	if (state.GetOtherPlayer())
 	{
-		state.GetOtherPlayer()->SetLastMoveWin();
-		state.GetOtherPlayer()->SetOtherPlayer(nullptr);
-		state.SetOtherPlayer(nullptr);
-		state.SetRead(sizeof(uint32_t));
+		// Check if that was a winning move. If so, set a flag on the other connection & remove the pair pointers, set this connection up for a lobby read
+		if (result & WIN_YES)
+		{
+			state.GetOtherPlayer()->SetLastMoveWin();
+			state.GetOtherPlayer()->SetOtherPlayer(nullptr);
+			state.SetOtherPlayer(nullptr);
+			state.SetRead(sizeof(uint32_t));
+		}
+		else
+		{
+			// Set other connection to state FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS
+			state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS);
+			// Put other connection in write list and set it up with the results we just read
+			fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
+			state.GetOtherPlayer()->SetWrite(readData, readLen);
+			
+			// Remove this connection from the read list
+			FD_CLR(state.GetFD(), &readSet);
+		}
 	}
 	else
 	{
-		// Set other connection to state FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS
-		state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS);
-		// Put other connection in write list and set it up with the results we just read
-		fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
-		state.GetOtherPlayer()->SetWrite(readData, readLen);
-		
-		// Remove this connection from the read list
-		FD_CLR(state.GetFD(), &readSet);
+		abortConnection(state, readSet, writeSet);
 	}
 }
 
