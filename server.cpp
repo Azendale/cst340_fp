@@ -201,7 +201,7 @@ int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 		}
 	}
 	// Shut the connection
-	if (shutdown(stat.GetFD(), SHUT_RDWR))
+	if (shutdown(state.GetFD(), SHUT_RDWR))
 	{
 		returnVal = 1;
 	}
