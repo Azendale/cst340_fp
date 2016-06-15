@@ -614,7 +614,7 @@ int main(int argc, char ** argv)
 		bool hit;
 		short hitShipSize;
 		bool sink;
-		bool win;
+		bool win = false;
 		// Place ships
 		game.PlaceShips();
 		game.PrintBoard();
@@ -654,8 +654,7 @@ int main(int argc, char ** argv)
 			}
 		}
 		// Play the rest of the game
-		bool won = false;
-		while (!won && !quit)
+		while (!win && !quit)
 		{
 			// Loop though turns, starting with them sending us a turn
 			std::cout << "Other players turn.\n";
@@ -674,6 +673,7 @@ int main(int argc, char ** argv)
 			game.PrintBoard();
 			
 			uint32_t theirMoveResults = encodeMoveResults(x, y, hit, hitShipSize, sink, win);
+			win = false;
 			
 			if (sizeof(uint32_t) != writeData(connection, (char *)&theirMoveResults, sizeof(uint32_t)))
 			{
