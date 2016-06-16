@@ -673,7 +673,6 @@ int main(int argc, char ** argv)
 			game.PrintBoard();
 			
 			uint32_t theirMoveResults = encodeMoveResults(x, y, hit, hitShipSize, sink, win);
-			win = false;
 			
 			if (sizeof(uint32_t) != writeData(connection, (char *)&theirMoveResults, sizeof(uint32_t)))
 			{
@@ -684,6 +683,7 @@ int main(int argc, char ** argv)
 			{
 				break; // go to the lobby
 			}
+			win = false;
 			
 			std::cout << "Our turn.\n";
 			getPlayCoord(x, y);
