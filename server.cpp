@@ -631,7 +631,7 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 		state.SetState(FD_STATE_LOBBY);
 		state.SetRead(sizeof(uint32_t));
 		fdAddSet(state.GetFD(), &readSet);
-		state.ResetLastMoveWin();
+		state.ClearLastMoveWin();
 	}
 	else
 	// Otherwise:
@@ -700,7 +700,6 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 			state.SetState(FD_STATE_LOBBY);
 			state.GetOtherPlayer()->SetOtherPlayer(nullptr);
 			state.SetOtherPlayer(nullptr);
-			)
 		}
 		else
 		{
