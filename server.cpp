@@ -438,9 +438,9 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	
 	std::string otherPlayer(readData, nameLen);
 	FdState * otherFd = findByName(otherPlayer);
-	if (nullptr == otherFd)
+	if (nullptr == otherFd || state.GetName() == otherPlayer)
 	{
-		// No such player
+		// No such player, or they tried to play themselves
 		uint32_t response = ACTION_INVITE_RESPONSE;
 		response = response | INVITE_RESPONSE_NO;
 		state.SetState(FD_STATE_GAME_REQ_REJECT);
