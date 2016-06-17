@@ -631,6 +631,7 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 		state.SetState(FD_STATE_LOBBY);
 		state.SetRead(sizeof(uint32_t));
 		fdAddSet(state.GetFD(), &readSet);
+		FD_CLR(state.GetFD(), &writeSet);
 		state.ClearLastMoveWin();
 	}
 	else
