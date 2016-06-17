@@ -650,6 +650,8 @@ int main(int argc, char ** argv)
 			if (win)
 			{
 				// Go back to the lobby
+				std::cout << "Returning to Lobby.\n";
+				win = false;
 				break;
 			}
 		}
@@ -681,6 +683,8 @@ int main(int argc, char ** argv)
 			}
 			if (win) // other player won
 			{
+				win = false;
+				std::cout << "Returning to Lobby.\n";
 				break; // go to the lobby
 			}
 			win = false;
@@ -712,6 +716,7 @@ int main(int argc, char ** argv)
 			outputMoveResults(true, hit, hitShipSize, sink, win);
 			if (win)
 			{
+				win = false;
 				// Go back to the lobby
 				break;
 			}

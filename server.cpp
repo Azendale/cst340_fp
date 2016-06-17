@@ -630,6 +630,8 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 	{
 		state.SetState(FD_STATE_LOBBY);
 		state.SetRead(sizeof(uint32_t));
+		fdAddSet(state.GetFD(), &readSet);
+		state.ResetLastMoveWin();
 	}
 	else
 	// Otherwise:
@@ -689,9 +691,16 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 		if (result & WIN_YES)
 		{
 			state.GetOtherPlayer()->SetLastMoveWin();
+			state.GetOtherPlayer()->SetWrite(readData, readLen);
+			// Set other connection to state FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS
+			state.GetOtherPlayer()->SetState(FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS);
+			fdAddSet(state.GetOtherPlayer()->GetFD(), &writeSet);
+			
+			state.SetRead(sizeof(uint32_t));
+			state.SetState(FD_STATE_LOBBY);
 			state.GetOtherPlayer()->SetOtherPlayer(nullptr);
 			state.SetOtherPlayer(nullptr);
-			state.SetRead(sizeof(uint32_t));
+			)
 		}
 		else
 		{
