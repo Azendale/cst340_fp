@@ -1,7 +1,13 @@
 #include "Game.h"
 #include <iostream>
 
-
+/****************************************************************
+* Create a new game object
+* Preconditions:
+*  None
+* Postcondition:
+*  Game board initialized to empty boards. Ships not placed.
+****************************************************************/
 Game::Game()
 {
 	for (int x=0; x < MAP_SIDE_SIZE; ++x)
@@ -19,16 +25,37 @@ Game::Game()
 	}
 }
 
+/****************************************************************
+* Records where we sucessfully hit another ship on the other player's board
+* Preconditions:
+*  x and y < MAP_SIDE_SIZE
+* Postcondition:
+*  That place on the map marked as a sucessfull hit
+****************************************************************/
 void Game::SetPlayHitCoord(short x, short y)
 {
 	targetmap[x][y].second = true;
 }
 
+/****************************************************************
+* Marks where the user targeted on the other player's map
+* Preconditions:
+*  x and y < MAP_SIDE_SIZE
+* Postcondition:
+*  That place on the map marked as having been fired at
+****************************************************************/
 void Game::SetPlayCoord(short x, short y)
 {
 	targetmap[x][y].first = true;
 }
 
+/*****************************************************************
+* Displays the board to stdout (both the ocean and targeting boards)
+* Preconditions:
+*  None?
+* Postcondition:
+*  Targeting and ocean boards printed out to stdout
+****************************************************************/
 void Game::PrintBoard() const
 {
 	std::cout << "Target Map:\n";
@@ -116,6 +143,13 @@ void Game::PrintBoard() const
 	std::cout << "\033[0m"; // Reset everything to defaults
 }
 
+/***************************************************************
+*Interacts with the user through stdin to place the ships on their board
+* Preconditions:
+*  Ships not already placed
+* Postcondition:
+*  Ships placed on the board
+****************************************************************/
 void Game::PlaceShips()
 {
 	for (int i=5; i > 0; --i)
@@ -186,6 +220,20 @@ void Game::PlaceShips()
 	}
 }
 
+/*****************************************************************
+* Calulates the results of the other player's move at x,y. 'shipSize' is
+* the size of the ship that was hit (if any). 'win' is true if they just
+* won. 'sink' is if they sunk a ship. 'hit' is if they hit a ship.
+* 
+* Preconditions:
+*  x and y < MAP_SIDE_SIZE
+* Postcondition:
+*  Game board updated to show the results of firing on that location.
+*  hit set to true if a ship was hit in a new location, otherwise false
+*  shipSize set to true if a new hit happened, otherwise just left
+*  sink set to true if a ship was sunk by the shot, otherwise set to false
+*  win set to true if that move just won the game
+****************************************************************/
 void Game::CalculateMoveResults(short x, short y, bool & hit, short & shipSize, bool & sink, bool & win)
 {
 	if (ocean[x][y].first != nullptr && !(ocean[x][y].second))
