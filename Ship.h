@@ -25,6 +25,8 @@
  *  Checks if the ship has had all spaces on it hit.
  * bool CoordIsOnShip(const coord & location) const
  *  Checks if the coord is a space the ship occupies
+ * void SetSize(short size)
+ *  Sets the size of this ship
  ***********************************/
 
 #include "coord.h"
