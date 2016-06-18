@@ -8,6 +8,7 @@
 // Reads coming out of FD_STATE_ANON_NAME_SIZE will be governed by the size sent earlier in the transition from FD_STATE_ANON to FD_STATE_ANON_NAME_SIZE
 // We know the name size, reading the name is the next transition
 #define FD_STATE_ANON_NAME_SIZE 2
+// Waiting for someone to invite the player, or for the player to invite someone.
 #define FD_STATE_LOBBY 4
 // Waiting for other player to respond if they want to play or not
 #define FD_STATE_REQD_GAME 5
@@ -21,7 +22,6 @@
 // Reading results of other connection's move from this client
 #define FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS 9
 
-#define FD_STATE_WAIT_QUIT_ACK 10
 // Name was rejected. Has this state during the duration of writing the reject message
 #define FD_STATE_NAME_REJECT 11
 // Name was accepted. Has this state during the duration of writing the accept message

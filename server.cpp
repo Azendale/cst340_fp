@@ -818,29 +818,13 @@ int main(int argc, char ** argv)
 					{
 						lobbyRead(it, readSet, writeSet);
 					}
-					else if (FD_STATE_REQD_GAME == state)
-					{
-						
-					}
 					else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
 					{
 						thisFdMoveRead(it, readSet, writeSet);
 					}
-					else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
-					{
-						
-					}
-					else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
-					{
-						
-					}
 					else if (FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS == state)
 					{
 						oFdMoveResultsRead(it, readSet, writeSet);
-					}
-					else if (FD_STATE_WAIT_QUIT_ACK == state)
-					{
-						
 					}
 					else if (FD_STATE_OPLYR_NAME_READ == state)
 					{
@@ -867,37 +851,13 @@ int main(int argc, char ** argv)
 				else if (writeResult == 1)
 				{
 					// Fd ready for write
-					if (FD_STATE_ANON == state)
-					{
-						
-					}
-					else if (FD_STATE_LOBBY == state)
-					{
-						
-					}
-					else if (FD_STATE_REQD_GAME == state)
-					{
-						
-					}
-					else if (FD_STATE_GAME_WAIT_THISFD_MOVE == state)
-					{
-						
-					}
-					else if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
+					if (FD_STATE_GAME_WAIT_THISFD_MOVE_RESULTS == state)
 					{
 						thisFdMoveResultsWrite(it, readSet, writeSet);
 					}
 					else if (FD_STATE_GAME_WAIT_OFD_MOVE == state)
 					{
 						oFdMoveWrite(it, readSet, writeSet);
-					}
-					else if (FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS == state)
-					{
-						
-					}
-					else if (FD_STATE_WAIT_QUIT_ACK == state)
-					{
-						
 					}
 					else if (FD_STATE_NAME_REJECT == state)
 					{
@@ -926,7 +886,8 @@ int main(int argc, char ** argv)
 				}
 			}
 		}
-		// Retore the lists of things we want to check
+		// Retore the lists of things we want to check since pselect overwrites
+		// the list to tell us what is ready to read/write
 		readSetSelectResults = readSet;
 		writeSetSelectResults = writeSet;
 	}
