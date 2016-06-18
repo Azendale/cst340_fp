@@ -1,4 +1,15 @@
 #pragma once
+/************************************
+ * Author: Erik Andersen
+ * Lab: CST340 Final Lab
+ * 
+ * Class that tracks the state of each connection or file descriptor in the
+ * server.
+ * Also includes the #defines of the various states stored in the class.
+ * 
+ ***********************************/
+
+// Store things like username
 #include <string>
 
 #define FD_STATE_ACCEPT_SOCK 0
@@ -42,16 +53,30 @@
 class FdState
 {
 public:
+	// Create a new state tracker for 'fd', starting in 'state'
 	FdState(int fd, short state);
+	// Clean up the state tracking class
 	~FdState();
+	// Set one state tracking class equal to another
 	const FdState & operator=(const FdState & rhs);
+	// Copy contruct a state class
 	FdState(const FdState & s);
+	// Get the Fd that is wrapped in this state class
 	int GetFD() const;
+	// Get the state that this connection is in
 	short GetState() const;
+	// Set the state that this connection is in
 	void SetState(short state);
+	// Set the username of the player that is connected
 	void SetName(const std::string& name);
+	// Get the username of the player that is connected
 	std::string GetName() const;
+	// Get a pointer to the other player in the game (only valid 
+	// while connection is participating in a game -- otherwise nullptr)
 	FdState * GetOtherPlayer() const;
+	// Set the pointer to the other player in the game (only valid 
+	// while connection is participating in a game -- otherwise should be reset
+	// to nullptr)
 	void SetOtherPlayer(FdState * other);
 	// Reads once and returns true if that's all we were trying to get
 	int Read();
