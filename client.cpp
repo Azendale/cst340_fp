@@ -1,3 +1,12 @@
+/************************************
+ * Author: Erik Andersen
+ * Lab: CST340 Final Lab
+ * 
+ * 
+ * Implements a battleship client. -p sets the port to connect to. -s sets the
+ * server to connect to.
+ * Input of coordinates are 1 based.
+ ************************************/
 #include <iostream>
 #include "Game.h"
 #include "netDefines.h"
@@ -85,6 +94,15 @@ void parseOptions(int argc, char ** argv, program_options & options)
 	}
 }
 
+/****************************************************************
+ * Set up the connection to the server
+ * 
+ * Preconditions:
+ *  options is an intialized program_options struct with the correct settings
+ * 
+ * Postcondition:
+ *  connection opened and FD returned. May exit on failure
+ ****************************************************************/
 int connectToServer(program_options & options)
 {
 	int sockfd = -1;
@@ -138,6 +156,7 @@ int connectToServer(program_options & options)
 	return sockfd;
 }
 
+
 std::string getUsername(std::string prompt)
 {
 	std::string returnVal;
@@ -149,6 +168,15 @@ std::string getUsername(std::string prompt)
 	return returnVal;
 }
 
+/****************************************************************
+ * Read data from 'fd' into 'buff' of size 'toRead'
+ * 
+ * Preconditions:
+ *  fd is an open file descriptor. buff is a buffer of at least 'toRead' bytes
+ * Postcondition:
+ *  returns number of read bytes, with read data written to buff
+ * 
+ ****************************************************************/
 int readBytes(int fd, char * buff, int toRead)
 {
 	int readSoFar = 0;
@@ -167,6 +195,14 @@ int readBytes(int fd, char * buff, int toRead)
 	return readSoFar;
 }
 
+/****************************************************************
+ * Checks if a signed and unsigned number are the same
+ * 
+ * Preconditions:
+ *  None
+ * Postcondition:
+ *  returns true if the numbers are equivalent
+ ****************************************************************/
 bool signEQunsign(int sign, unsigned int usign)
 {
 	if (sign < 0)
@@ -176,6 +212,15 @@ bool signEQunsign(int sign, unsigned int usign)
 	return ((unsigned int)sign) == usign;
 }
 
+/****************************************************************
+ * Reads a length and then string from a connection, and returns the resulting
+ *  string. Handles strings up to LONG_TRANSFER_SIZE_MASK bytes
+ * 
+ * Preconditions:
+ *  fd is open and readable
+ * Postcondition:
+ *  string that was read returned
+ ****************************************************************/
 std::string readLongString(int fd)
 {
 	int ReadCount = -1;
@@ -206,6 +251,15 @@ std::string readLongString(int fd)
 	return returnVal;
 }
 
+/****************************************************************
+ * Reads a length and then string from a connection, and returns the resulting
+ *  string. Handles strings up to TRANSFER_SIZE_MASK bytes
+ * 
+ * Preconditions:
+ *  fd is open and readable
+ * Postcondition:
+ *  string that was read returned
+ ****************************************************************/
 std::string readShortString(int fd)
 {
 	int ReadCount = -1;
@@ -236,6 +290,15 @@ std::string readShortString(int fd)
 	return returnVal;
 }
 
+/****************************************************************
+ * Writes data from 'buf' to fd, trying to transfer 'bytes' bytes
+ * 
+ * Preconditions:
+ *  buff a valid pointer to at least 'bytes' bytes of memory. fd an open and
+ *  writable fd
+ * Postcondition:
+ *  number of sucessfully written bytes returned, or -1 for an error
+ ****************************************************************/
 int writeData(int fd, const char * buf, int bytes)
 {
 	int writtenThisTime = 0;
@@ -252,6 +315,15 @@ int writeData(int fd, const char * buf, int bytes)
 	return writtenTotal;
 }
 
+/****************************************************************
+ * serialize a string to fd, with a header of action type 'action'
+ * 
+ * Preconditions:
+ *  fd open and writable. Action a valid action as #defined by netDefines.h
+ * Postcondition:
+ *  Action, string length, and string itself written to connection or -1 returned
+ *  for an error
+ ****************************************************************/
 int writeString(int fd, const std::string & str, uint32_t action)
 {
 	uint32_t len = str.length();
@@ -268,6 +340,14 @@ int writeString(int fd, const std::string & str, uint32_t action)
 	return str.length() + 4;
 }
 
+/****************************************************************
+ * Request the x and y coordinates to fire at from the user
+ * 
+ * Preconditions:
+ *  Game being played and it's the players turn
+ * Postcondition:
+ *  x and y coordinates stored in 'x' and  'y'
+ ****************************************************************/
 void getPlayCoord(short &x, short &y)
 {
 	x = 0;
@@ -285,6 +365,14 @@ void getPlayCoord(short &x, short &y)
 	}
 }
 
+/****************************************************************
+ * Encode the cordinates of a move
+ * 
+ * Preconditions:
+ *  x and y <= MAP_SIDE_SIZE
+ * Postcondition:
+ *  encoded move returned
+ ****************************************************************/
 uint32_t encodeMove(short x, short y)
 {
 	uint32_t ourMove = ACTION_MOVE;
@@ -294,6 +382,14 @@ uint32_t encodeMove(short x, short y)
 	return ourMove;
 }
 
+/****************************************************************
+ * Decode a move's coordinates
+ * 
+ * Preconditions:
+ *  response a valid move message in network order
+ * Postcondition:
+ *  x and y updated with parsed coordinates
+ ****************************************************************/
 void decodeMove(uint32_t response, short & x, short & y)
 {
 	response = ntohl(response);
@@ -301,6 +397,14 @@ void decodeMove(uint32_t response, short & x, short & y)
 	y = (response & MOVE_Y_COORD_MASK_UNSHIFTED)>>MOVE_Y_COORD_SHIFT;
 }
 
+/****************************************************************
+ * Encode the results of a move
+ * 
+ * Preconditions:
+ *  x and y <= MAP_SIDE_SIZE, shipSize <=5, if win == true; hit == true
+ * Postcondition:
+ *  encoded result of move returned, already converted to network order
+ ****************************************************************/
 uint32_t encodeMoveResults(short x, short y, bool hit, short shipSize, bool sink, bool win)
 {
 	uint32_t response = ACTION_MOVE_RESULTS;
@@ -325,6 +429,14 @@ uint32_t encodeMoveResults(short x, short y, bool hit, short shipSize, bool sink
 	return response;
 }
 
+/****************************************************************
+ * Decode the results of a move
+ * 
+ * Preconditions:
+ *  response a valid network order encoded move results message
+ * Postcondition:
+ *  hit, shipSize, sink, and win all updated from the encoded values in response
+ ****************************************************************/
 void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & sink, bool & win)
 {
 	response = ntohl(response);
@@ -356,6 +468,15 @@ void decodeMoveResults(uint32_t response, bool & hit, short & shipSize, bool & s
 	}
 }
 
+/****************************************************************
+ * Output the results of a move
+ * 
+ * Preconditions:
+ *  if win == true, then sink == true. If sink == true; hit == true. If 
+ *  hit==true, then shipSize set
+ * Postcondition:
+ *  Results of the move outputted to stdout 
+ ****************************************************************/
 void outputMoveResults(bool ourMove, bool hit, short shipSize, bool sink, bool win)
 {
 	if (ourMove)
