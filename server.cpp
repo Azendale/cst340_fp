@@ -26,6 +26,14 @@ extern "C"
 static std::vector<FdState> Fds;
 static int maxFd = 3;
 
+/****************************************************************
+ * Parse the port from the command line args
+ * 
+ * Preconditions:
+ *  User properly specified port in the argc and argv given
+ * Postcondition:
+ *  returns the port or service name string, or an empty string on error
+ ****************************************************************/
 std::string getPortString(int argc, char ** argv)
 {
 	int arg;
@@ -45,6 +53,14 @@ std::string getPortString(int argc, char ** argv)
 	return std::string(portString);
 }
 
+/****************************************************************
+ * Add a FD to a set, and update the maxFd count if needed
+ * 
+ * Preconditions:
+ *  fd a valid fd, 'set' a valid fd_set pointer
+ * Postcondition:
+ *  fd added to the set, maxFd updated if this is the highest FD seen so far
+ ****************************************************************/
 void fdAddSet(int newFd, fd_set * set)
 {
 	if (newFd > maxFd)
@@ -54,6 +70,15 @@ void fdAddSet(int newFd, fd_set * set)
 	FD_SET(newFd, set);
 }
 
+/****************************************************************
+ * Start listening on the specified port 
+ * 
+ * Preconditions:
+ *  No one already listening on the same port, portstring a valid service 
+ *  or port number
+ * Postcondition:
+ *  sockfd updated with the new filedescriptor
+ ****************************************************************/
 int SetUpListing(std::string portString, fd_set & readList, int & sockfd)
 {
 	// Gives getaddrinfo hints about the critera for the addresses it returns
@@ -139,11 +164,14 @@ int SetUpListing(std::string portString, fd_set & readList, int & sockfd)
 	return 0;
 }
 
-void sigint(int signal)
-{
-	// Close open FDs
-}
-
+/****************************************************************
+ * Accept a new connection
+ * 
+ * Preconditions:
+ *  sockfd ready for a read by accept()
+ * Postcondition:
+ *  new file descriptor state added to the Fds list
+ ****************************************************************/
 int acceptConnection(int sockfd, fd_set & readSet)
 {
 	int acceptfd = -1;
@@ -170,6 +198,15 @@ int acceptConnection(int sockfd, fd_set & readSet)
 	return 0;
 }
 
+
+/****************************************************************
+ * Remove a Fd from the 'container' list
+ * 
+ * Preconditions:
+ *  fd actually in one of the FdState wrappers in container
+ * Postcondition:
+ *  FdState wrapper for fd removed from the container
+ ****************************************************************/
 int removeFd(std::vector<FdState> & container, int fd)
 {
 	int returnVal = 1;
@@ -185,6 +222,15 @@ int removeFd(std::vector<FdState> & container, int fd)
 	return returnVal;
 }
 
+/****************************************************************
+ * Do our best to clean up from a connection
+ * 
+ * Preconditions:
+ *  Hopefully none, cleanup function
+ * Postcondition:
+ *  fd removed from read and write sets, other players pointing to it set to
+ *  nullptr, connection shut and closed, FdState removed from Fds
+ ****************************************************************/
 int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	int returnVal = 0;
@@ -217,6 +263,14 @@ int abortConnection(FdState & state, fd_set & readSet, fd_set & writeSet)
 	return returnVal;
 }
 
+/****************************************************************
+ * Read a command from a connection for a client with no name set yet
+ * 
+ * Preconditions:
+ *  FdState in FD_STATE_ANON state
+ * Postcondition:
+ *  command read from the connection, and state changed
+ ****************************************************************/
 void anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	uint32_t request;
@@ -255,6 +309,14 @@ void anonRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
+/****************************************************************
+ * Find a FdState in Fds by it's username
+ * 
+ * Preconditions:
+ *  Searched for FdState is in FD_STATE_LOBBY
+ * Postcondition:
+ *  nullptr returned if not found, otherwise pointer to search result
+ ****************************************************************/
 FdState * findByName(const std::string & name)
 {
 	for (auto& state: Fds)
@@ -267,6 +329,14 @@ FdState * findByName(const std::string & name)
 	return nullptr;
 }
 
+/****************************************************************
+ * Generate a list of players currently in the lobby
+ * 
+ * Preconditions:
+ *  None?
+ * Postcondition:
+ *  String listing the players in the lobby returned
+ ****************************************************************/
 std::string getNameList()
 {
 	std::string returnVal("Available players:\n");
@@ -281,7 +351,14 @@ std::string getNameList()
 	return returnVal;
 }
 
-// Called after finishing read in FD_STATE_ANON_NAME_SIZE
+/****************************************************************
+ * Read the username for this connection from the connection
+ * 
+ * Preconditions:
+ *  Called after finishing read in FD_STATE_ANON_NAME_SIZE
+ * Postcondition:
+ *  username read from the connection, and state changed
+ ****************************************************************/
 void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	short readLen;
@@ -317,7 +394,16 @@ void nameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-// In state FD_STATE_NAME_REJECT after successfully writing rejection. Switches to listing in anon state
+/****************************************************************
+ * Change the state of a connection after writing a username reject
+ * 
+ * Preconditions:
+ * In state FD_STATE_NAME_REJECT after successfully writing rejection. Switches
+ *  to listing in anon state
+ *
+ * Postcondition:
+ *  connection in FD_STATE_ANON and ready to read another command
+ ****************************************************************/
 void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to read
@@ -329,7 +415,16 @@ void nameRejectAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetRead(sizeof(uint32_t));
 }
 
-// In state FD_STATE_NAME_ACCEPT after successfully writing response. Switches to listing in lobby mode
+/****************************************************************
+ *  Change the state of a connection after writing a username accept
+ * 
+ * Preconditions:
+ * In state FD_STATE_NAME_ACCEPT after successfully writing response. Switches
+ * to listing in lobby mode
+ *
+ * Postcondition:
+ *  connection in FD_STATE_LOBBY and ready to read another command
+ ****************************************************************/
 void nameAcceptAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to read to listen for name listing command
@@ -341,7 +436,16 @@ void nameAcceptAfterWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetRead(sizeof(uint32_t));
 }
 
-// Called after finishing write in FD_STATE_NAME_ACCEPT or FD_STATE_NAME_REJECT state
+/****************************************************************
+ * Change the state of a connection after writing a response to a name request
+ * 
+ * Preconditions:
+ * Called after finishing write in FD_STATE_NAME_ACCEPT or FD_STATE_NAME_REJECT
+ * state
+ *
+ * Postcondition:
+ *  connection set to read 32 bits, and state updated
+ ****************************************************************/
 void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	if (state.GetState() == FD_STATE_NAME_ACCEPT)
@@ -361,6 +465,16 @@ void nameResponseWriteFinish(FdState & state, fd_set & readSet, fd_set & writeSe
 	fdAddSet(state.GetFD(), &readSet);
 }
 
+/****************************************************************
+ * Create and serialize a list of players in the lobby
+ * 
+ * Preconditions:
+ *
+ * Postcondition:
+ *  returns the string that can be written to the connection to be deserialized
+ *  on the other end (no need to write a length before the string, that is
+ *  already embedded in the returned string)
+ ****************************************************************/
 std::string GenerateNetNameList()
 {
 	std::string nameList = getNameList();
@@ -377,7 +491,16 @@ std::string GenerateNetNameList()
 	return returnString;
 }
 
-// In state FD_STATE_LOBBY, after successfully reading
+/****************************************************************
+ * Handle state change after reading in the FD_STATE_LOBBY state
+ * 
+ * Preconditions:
+ * In state FD_STATE_LOBBY, after successfully reading
+ *
+ * Postcondition:
+ *  connection set to either read the name of a player to play or handle a
+ *  request for a list of players in the lobby.
+ ****************************************************************/
 void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// FD can request to play other player
@@ -424,7 +547,17 @@ void lobbyRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-// called in state FD_STATE_OPLYR_NAME_READ after reading the other player's name has finished
+/****************************************************************
+ * Handle state transition from FD_STATE_OPLYR_NAME_READ
+ * 
+ * Preconditions:
+ * called in state FD_STATE_OPLYR_NAME_READ after reading the other player's
+ *  name has finished
+ *
+ * Postcondition:
+ *  other player invited to game if they exist and are in the right state,
+ *  otherwise a no answer written to connection
+ ****************************************************************/
 void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	short nameLen;
@@ -473,7 +606,14 @@ void otherPlayerNameRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-// Find the Fd that invited the one pointed to by "invitee"
+/****************************************************************
+ * Find the Fd that invited the one pointed to by "invitee"
+ * 
+ * Preconditions:
+ *  invitee a valid FdState pointer that previously invited us
+ * Postcondition:
+ *  nullptr returned if no such thing found, otherwise pointer to the result
+ ****************************************************************/
 FdState * findFdByPastInvitation(FdState * invitee)
 {
 	FdState * returnVal = nullptr;
@@ -487,7 +627,17 @@ FdState * findFdByPastInvitation(FdState * invitee)
 	return returnVal;
 }
 
-// Switches state of the invited player to reading their response after we have sent them the invatiation. Should be called when the invited player connection finishes a write in FD_STATE_GAME_WRITE
+/****************************************************************
+ * Switches state of the invited player to reading their response after we have
+ * sent them the invatiation. 
+ * 
+ * Preconditions:
+ *  called when the invited player connection finishes a write in
+ *  FD_STATE_GAME_WRITE
+ * Postcondition:
+ *  connection switched to reading, and state set to
+ *  FD_STATE_GAME_INVITE_RESP_WAIT
+ ****************************************************************/
 void writeGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to reading now
@@ -497,7 +647,14 @@ void writeGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetState(FD_STATE_GAME_INVITE_RESP_WAIT);
 }
 
-// Reads the response after a connection has been invited to a game, should be called after successful read in state FD_STATE_GAME_INVITE_RESP_WAIT
+/****************************************************************
+ * Reads the response after a connection has been invited to a game
+ * 
+ * Preconditions:
+ *  called after successful read in state FD_STATE_GAME_INVITE_RESP_WAIT
+ * Postcondition:
+ *  connection set to read 32 bits, and state updated
+ ****************************************************************/
 void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Need to find out if they said yes or no
@@ -564,7 +721,15 @@ void readStateGameInvite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-// Should be called after successfull write in FD_STATE_GAME_REQ_REJECT
+/****************************************************************
+ * Handle state change after we have successfully notified client of rejected
+ * game invitation
+ * 
+ * Preconditions:
+ *  called after successfull write in FD_STATE_GAME_REQ_REJECT
+ * Postcondition:
+ *  connection switched to reading, state set to FD_STATE_LOBBY
+ ****************************************************************/
 void afterWriteReject(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Switch to reading
@@ -575,8 +740,15 @@ void afterWriteReject(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetState(FD_STATE_LOBBY);
 }
 
-
-// Should be called after successfull write in FD_STATE_GAME_REQ_ACCEPT
+/****************************************************************
+ * Handle state change after we have successfully notified client of accepted
+ * game invitation
+ * 
+ * Preconditions:
+ *  Should be called after successfull write in FD_STATE_GAME_REQ_ACCEPT
+ * Postcondition:
+ *  connection switched to waiting for other connection in the game
+ ****************************************************************/
 void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// switch to state FD_STATE_GAME_OFD_MOVE (which is waiting for other person to move state)
@@ -585,7 +757,14 @@ void afterWriteAccept(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetState(FD_STATE_GAME_WAIT_OFD_MOVE);
 }
 
-// Called after a read of a move from this FD (called after a read in state FD_STATE_GAME_THISFD_MOVE)
+/****************************************************************
+ * Handle state change after a read of a move from this FD
+ * 
+ * Preconditions:
+ *  called after a read in state FD_STATE_GAME_THISFD_MOVE
+ * Postcondition:
+ *  Other player's connection set up to write the move we just recieved
+ ****************************************************************/
 void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Clear this FD from read list so it is in no lists
@@ -622,7 +801,16 @@ void thisFdMoveRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-// Called after writing results of this connections move to this connection (called after write in state FD_STATE_GAME_THISFD_MOVE_RESULTS)
+/****************************************************************
+ * Handle state change after writing results of this connections move to this
+ * connection
+ * 
+ * Preconditions:
+ *  called after write in state FD_STATE_GAME_THISFD_MOVE_RESULTS
+ * Postcondition:
+ *  connection moved to lobby if they won, otherwise switch the other Fd to
+ *  reading move from client 
+ ****************************************************************/
 void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// If the game was won, set up a lobby read and go to state FD_STATE_LOBBY
@@ -657,7 +845,17 @@ void thisFdMoveResultsWrite(FdState & state, fd_set & readSet, fd_set & writeSet
 	}
 }
 
-// After the other connection's move has been written to this connection (called after write in state FD_STATE_GAME_WAIT_OFD_MOVE)
+/****************************************************************
+ * Handle state change after the other connection's move has been written to
+ * this connection
+ * 
+ * Preconditions:
+ *  called after write in state FD_STATE_GAME_WAIT_OFD_MOVE
+ * Postcondition:
+ *  this connection set to read 32 bits and state set to
+ *  FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS 
+ ****************************************************************/
+// 
 void oFdMoveWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Put this connection in read list and make sure it's not in the write list anymore
@@ -668,7 +866,17 @@ void oFdMoveWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 	state.SetState(FD_STATE_GAME_WAIT_OFD_MOVE_RESULTS);
 }
 
-// Called after a read from this connection of the results of the other FD's move (called after read from state FD_STATE_GAME_OFD_MOVE_RESULTS)
+/****************************************************************
+ * handle state change after a read from this connection of the results of the
+ * other FD's move
+ * 
+ * Preconditions:
+ *  called after read from state FD_STATE_GAME_OFD_MOVE_RESULTS
+ * Postcondition:
+ *  if a win happened, then this connection moved to the lobby, other
+ *  connection set to write result to client
+ *  otherwise, other connection set to write result to client
+ ****************************************************************/
 void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	short readLen;
@@ -720,7 +928,14 @@ void oFdMoveResultsRead(FdState & state, fd_set & readSet, fd_set & writeSet)
 	}
 }
 
-// Called after writing the lobby name list to the connection (called after write finishes in FD_STATE_REQ_NAME_LIST state)
+/****************************************************************
+ * Handle state change after writing the lobby name list to the connection 
+ * 
+ * Preconditions:
+ *  called after write finishes in FD_STATE_REQ_NAME_LIST state
+ * Postcondition:
+ *  connection set to lobby state and prepared for a read of 32 bits
+ ****************************************************************/
 void afterNameListWrite(FdState & state, fd_set & readSet, fd_set & writeSet)
 {
 	// Take ourself out of the write list
