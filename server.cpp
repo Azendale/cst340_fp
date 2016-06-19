@@ -958,13 +958,6 @@ int main(int argc, char ** argv)
 	
 	std::cout << "Battleship server starting, version " << GIT_VERSION << ".\n";
 	
-	// Install the signal handler for SIGINT.
-	struct sigaction s;
-	s.sa_handler = sigint;
-	sigemptyset(&s.sa_mask);
-	s.sa_flags = 0;
-	sigaction(SIGINT, &s, NULL);
-	
 	// Block SIGTERM.
 	sigset_t sigset, oldset;
 	sigemptyset(&sigset);
@@ -985,7 +978,7 @@ int main(int argc, char ** argv)
 	fd_set readSetSelectResults = readSet;
 	fd_set writeSetSelectResults = writeSet;
 	
-	while (pselect(maxFd+1, &readSetSelectResults, &writeSetSelectResults, NULL, NULL, &oldset) >= 0)
+	while (pselect(maxFd+1, &readSetSelectResults, &writeSetSelectResults, NULL, NULL, NULL) >= 0)
 	{
 		// Do some processing. Note that the process will not be
 		// interrupted while inside this loop.
