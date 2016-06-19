@@ -961,7 +961,6 @@ int main(int argc, char ** argv)
 	// Block SIGTERM.
 	sigset_t sigset, oldset;
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
 	sigprocmask(SIG_BLOCK, &sigset, &oldset);
 	
 	// Enter the pselect() loop, using the original mask as argument.
